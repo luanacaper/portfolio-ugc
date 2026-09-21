@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#55613b">
+<title>Admin | Luana Caper</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%2355613b'/%3E%3Ctext x='32' y='43' font-family='Arial' font-weight='800' font-size='34' text-anchor='middle' fill='%23ffbf85'%3EL%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--verde:#55613b;--verde-esc:#3f4a2b;--laranja:#d4691f;--laranja-claro:#ffbf85;--gelo:#f7f6f1;--tinta:#1d2216;--suave:#55594a;--linha:#e6e6da;--erro:#b3261e}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:"Manrope",system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--gelo);color:var(--tinta);line-height:1.5;-webkit-text-size-adjust:100%}
+h1,h2,h3,p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--tinta);outline-offset:2px;border-radius:8px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.wrap{max-width:900px;margin:0 auto;padding:16px}
+
+/* Botões */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:42px;padding:8px 18px;border-radius:999px;border:2px solid transparent;font-weight:700;font-size:.95rem;cursor:pointer;text-decoration:none;background:var(--verde);color:#fff;transition:background .2s}
+.btn:hover{background:var(--verde-esc)}
+.btn:disabled{opacity:.6;cursor:wait}
+.btn.contorno{background:#fff;color:var(--verde-esc);border-color:var(--verde)}
+.btn.contorno:hover{background:#eef0df}
+.btn.perigo{background:#fff;color:var(--erro);border-color:#e6b8b4}
+.btn.perigo:hover{background:#fbeceb}
+.btn.mini{min-height:34px;padding:4px 14px;font-size:.85rem}
+
+/* Login */
+.login{min-height:100vh;display:grid;place-items:center;padding:16px}
+.cartao{width:100%;max-width:400px;background:#fff;border:1px solid var(--linha);border-radius:26px;padding:28px 24px;box-shadow:0 18px 44px rgba(20,32,28,.12)}
+.logo{display:inline-grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--verde);color:var(--laranja-claro);font-weight:800;margin-bottom:12px}
+.cartao h1{font-size:1.5rem;letter-spacing:-.02em}
+.cartao .sub{color:var(--suave);margin:4px 0 18px;font-size:.95rem}
+.campo{display:grid;gap:5px;margin-bottom:12px}
+.campo label{font-weight:700;font-size:.88rem}
+.campo input,.campo select,.campo textarea{width:100%;padding:11px 14px;border:1.5px solid #d7dac8;border-radius:14px;background:var(--gelo)}
+.campo textarea{min-height:90px;resize:vertical}
+.campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:var(--verde);background:#fff;box-shadow:0 0 0 4px rgba(85,97,59,.2)}
+.campo .dica{font-size:.78rem;color:var(--suave)}
+.campo.check{display:flex;align-items:center;gap:10px}
+.campo.check input{width:20px;height:20px;padding:0}
+.aviso{padding:10px 14px;border-radius:14px;font-size:.9rem;margin-bottom:12px}
+.aviso.erro{background:#fbeceb;color:var(--erro);border:1px solid #e6b8b4}
+.aviso.ok{background:#e8f1e4;color:var(--verde-esc);border:1px solid #c9dbc1}
+
+/* Painel */
+.topo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 14px}
+.topo h1{font-size:1.3rem;letter-spacing:-.02em}
+.topo small{display:block;color:var(--suave);font-size:.8rem}
+.topo .acoes{display:flex;gap:8px;flex-wrap:wrap}
+.abas{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
+.aba{flex:none;padding:9px 16px;border-radius:999px;border:2px solid var(--linha);background:#fff;font-weight:700;cursor:pointer}
+.aba[aria-selected="true"]{background:var(--verde);border-color:var(--verde);color:#fff}
+.barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.barra p{color:var(--suave);font-size:.9rem}
+.lista{display:grid;gap:10px}
+.item{background:#fff;border:1px solid var(--linha);border-radius:20px;padding:14px 16px;display:grid;gap:8px}
+.item-cab{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+.item-cab img{flex:none;width:44px;height:78px;object-fit:cover;border-radius:8px;background:#ddd}
+.item-txt{min-width:0;flex:1}
+.item-txt b{display:block;overflow-wrap:anywhere}
+.item-txt span{display:block;color:var(--suave);font-size:.85rem;overflow-wrap:anywhere}
+.item-msg{background:var(--gelo);border-radius:12px;padding:8px 12px;font-size:.88rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.item-acoes{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.item-acoes select{padding:6px 10px;border:1.5px solid #d7dac8;border-radius:999px;background:#fff;font-weight:600}
+.chip{display:inline-block;padding:2px 10px;border-radius:999px;background:#ecefe0;font-size:.75rem;font-weight:700;color:var(--verde-esc)}
+.vazio{padding:28px 16px;text-align:center;color:var(--suave);background:#fff;border:1px dashed #cfd3bd;border-radius:20px}
+
+/* Formulário em janela */
+dialog{width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 24px);border:0;border-radius:24px;padding:22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:auto}
+dialog::backdrop{background:rgba(24,30,17,.55)}
+dialog h2{font-size:1.25rem;margin-bottom:14px;letter-spacing:-.02em}
+.form-acoes{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+</style>
+</head>
+<body>
+<main id="app"></main>
+
+<script>
+/* Endereço do banco e chave PÚBLICA (a chave pública pode ficar no site; quem protege os dados são as regras RLS do Supabase).
+   NUNCA cole aqui a chave secreta (sb_secret_...). */
+const SB = {
+  url: "https://tzpjkbzkmaeyjiktmpie.supabase.co",
+  chave: "sb_publishable_SPp8r0D8hiWdcEVe8u_YRw_Ezb0I5tl"
+};
+const CHAVE_SESSAO = "luana-admin-sessao";
+
+/* As abas do painel. Para criar uma aba nova, crie a tabela no Supabase e acrescente um bloco aqui. */
+const STATUS_MARCA = ["novo", "conversando", "proposta", "cliente", "perdido"];
+const ABAS = {
+  videos: {
+    rotulo: "Vídeos", tabela: "videos", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
+    dica: "Os vídeos daqui aparecem no site, na seção Vídeos Experiências Narradas.",
+    campos: [
+      { k: "titulo", r: "Título", t: "text", obrig: true },
+      { k: "local", r: "Local (cidade)", t: "text" },
+      { k: "link", r: "Link do vídeo", t: "text", obrig: true, dica: "Cole o link do YouTube (Shorts ou normal) ou do TikTok (com /video/ no endereço)." },
+      { k: "ordem", r: "Ordem na página (1 aparece primeiro)", t: "number" },
+      { k: "publicado", r: "Mostrar no site", t: "check" }
+    ]
+  },
+  marcas: {
+    rotulo: "Marcas e contatos", tabela: "marcas", ordem: "created_at.desc", novo: "Nova marca",
+    dica: "Quem preenche o formulário do site cai aqui como \"novo\". Vá mudando o status até virar cliente.",
+    campos: [
+      { k: "nome", r: "Nome ou marca", t: "text", obrig: true },
+      { k: "email", r: "E-mail", t: "email" },
+      { k: "telefone", r: "Telefone ou WhatsApp", t: "text" },
+      { k: "status", r: "Status", t: "select", opcoes: STATUS_MARCA },
+      { k: "mensagem", r: "Mensagem que a pessoa enviou", t: "textarea" },
+      { k: "observacoes", r: "Minhas anotações", t: "textarea" }
+    ]
+  },
+  calendario: {
+    rotulo: "Calendário", tabela: "calendario", ordem: "data.asc", novo: "Novo compromisso",
+    dica: "Gravações, postagens, reuniões e entregas em ordem de data.",
+    campos: [
+      { k: "data", r: "Data", t: "date", obrig: true },
+      { k: "titulo", r: "O que é", t: "text", obrig: true },
+      { k: "tipo", r: "Tipo", t: "select", opcoes: ["gravação", "postagem", "reunião", "entrega", "outro"] },
+      { k: "marca", r: "Marca ou local", t: "text" },
+      { k: "feito", r: "Já foi feito", t: "check" }
+    ]
+  },
+  campanhas: {
+    rotulo: "Campanhas", tabela: "campanhas", ordem: "created_at.desc", novo: "Nova campanha",
+    dica: "Campanhas em andamento e o resultado de cada uma.",
+    campos: [
+      { k: "nome", r: "Nome da campanha", t: "text", obrig: true },
+      { k: "marca", r: "Marca", t: "text" },
+      { k: "status", r: "Status", t: "select", opcoes: ["planejada", "em andamento", "concluída"] },
+      { k: "inicio", r: "Início", t: "date" },
+      { k: "fim", r: "Fim", t: "date" },
+      { k: "resultado", r: "Resultado", t: "textarea" }
+    ]
+  }
+};
+
+/* ---------- utilidades ---------- */
+const app = document.getElementById("app");
+function el(tag, attrs, filhos) {
+  const n = document.createElement(tag);
+  for (const k in (attrs || {})) {
+    const v = attrs[k];
+    if (v === false || v == null) continue;
+    if (k === "class") n.className = v;
+    else if (k === "text") n.textContent = v;
+    else n.setAttribute(k, v === true ? "" : v);
+  }
+  (filhos || []).forEach(f => f != null && n.append(f));
+  return n;
+}
+const limpar = n => { n.replaceChildren(); return n; };
+const dataBR = s => s ? new Date(s + "T12:00:00").toLocaleDateString("pt-BR") : "";
+
+/* ---------- sessão e chamadas ao Supabase ---------- */
+let sessao = null;
+try { sessao = JSON.parse(localStorage.getItem(CHAVE_SESSAO)); } catch (e) {}
+function salvarSessao(s) {
+  sessao = s;
+  try { s ? localStorage.setItem(CHAVE_SESSAO, JSON.stringify(s)) : localStorage.removeItem(CHAVE_SESSAO); } catch (e) {}
+}
+async function auth(tipo, corpo) {
+  const r = await fetch(SB.url + "/auth/v1/token?grant_type=" + tipo, { method: "POST", headers: { apikey: SB.chave, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(d.error_description || d.msg || d.message || "Não foi possível entrar.");
+  return d;
+}
+function guardar(d) {
+  salvarSessao({ acesso: d.access_token, renovar: d.refresh_token, expira: Date.now() + Math.max(d.expires_in - 30, 30) * 1000, email: (d.user && d.user.email) || (sessao && sessao.email) || "" });
+}
+async function tokenValido() {
+  if (!sessao) return null;
+  if (Date.now() > sessao.expira) {
+    try { guardar(await auth("refresh_token", { refresh_token: sessao.renovar })); }
+    catch (e) { salvarSessao(null); return null; }
+  }
+  return sessao.acesso;
+}
+async function rest(caminho, opc) {
+  const o = opc || {};
+  const token = await tokenValido();
+  if (!token) throw new Error("sessao");
+  const h = { apikey: SB.chave, Authorization: "Bearer " + token, "Content-Type": "application/json" };
+  if (o.retorno) h.Prefer = "return=" + o.retorno;
+  const r = await fetch(SB.url + "/rest/v1/" + caminho, { method: o.metodo || "GET", headers: h, body: o.corpo !== undefined ? JSON.stringify(o.corpo) : undefined });
+  if (r.status === 401) { salvarSessao(null); throw new Error("sessao"); }
+  if (!r.ok) { const d = await r.json().catch(() => ({})); throw new Error(d.message || "Erro " + r.status); }
+  return r.status === 204 ? null : r.json().catch(() => null);
+}
+
+/* ---------- links de vídeo ---------- */
+function lerVideo(link) {
+  const t = String(link || "").trim();
+  let m = t.match(/(?:youtu\.be\/|youtube\.com\/(?:shorts\/|embed\/|live\/)|[?&]v=)([A-Za-z0-9_-]{11})/);
+  if (m) return { plataforma: "yt", video_id: m[1] };
+  m = t.match(/tiktok\.com\/(?:@[\w.\-]+\/)?(?:video|player\/v1)\/(\d{8,25})/);
+  if (m) return { plataforma: "tt", video_id: m[1] };
+  return null;
+}
+const linkDoVideo = v => v.plataforma === "tt" ? "https://www.tiktok.com/video/" + v.video_id : "https://www.youtube.com/shorts/" + v.video_id;
+
+/* ---------- telas ---------- */
+function telaLogin(erro) {
+  limpar(app);
+  const msg = el("div", { class: "aviso erro", role: "alert", hidden: !erro, text: erro || "" });
+  const email = el("input", { id: "l-email", type: "email", autocomplete: "username", required: true });
+  const senha = el("input", { id: "l-senha", type: "password", autocomplete: "current-password", required: true });
+  const botao = el("button", { class: "btn", type: "submit", text: "Entrar", style: "width:100%" });
+  const form = el("form", {}, [
+    msg,
+    el("div", { class: "campo" }, [el("label", { for: "l-email", text: "E-mail" }), email]),
+    el("div", { class: "campo" }, [el("label", { for: "l-senha", text: "Senha" }), senha]),
+    botao
+  ]);
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    botao.disabled = true; botao.textContent = "Entrando...";
+    try {
+      guardar(await auth("password", { email: email.value.trim(), password: senha.value }));
+      const admin = await rest("rpc/is_admin", { metodo: "POST", corpo: {} });
+      if (admin !== true) { salvarSessao(null); throw new Error("Esse usuário entrou, mas ainda não tem permissão de administrador. Peça para liberar o acesso."); }
+      telaPainel();
+    } catch (err) {
+      salvarSessao(null);
+      msg.hidden = false;
+      msg.textContent = err.message === "Invalid login credentials" ? "E-mail ou senha incorretos." : err.message;
+      botao.disabled = false; botao.textContent = "Entrar";
+    }
+  });
+  app.append(el("div", { class: "login" }, [el("div", { class: "cartao" }, [
+    el("span", { class: "logo", "aria-hidden": "true", text: "L" }),
+    el("h1", { text: "Admin do portfólio" }),
+    el("p", { class: "sub", text: "Área só para a Luana. Entre para editar vídeos, contatos, calendário e campanhas." }),
+    form
+  ])]));
+  email.focus();
+}
+
+function telaPainel() {
+  limpar(app);
+  let atual = "videos";
+  const conteudo = el("div", {});
+  const abas = el("div", { class: "abas", role: "tablist", "aria-label": "Seções do admin" });
+  Object.keys(ABAS).forEach(k => {
+    const b = el("button", { class: "aba", role: "tab", type: "button", text: ABAS[k].rotulo, "aria-selected": String(k === atual) });
+    b.addEventListener("click", () => { atual = k; abas.querySelectorAll(".aba").forEach(x => x.setAttribute("aria-selected", String(x === b))); mostrarAba(conteudo, k); });
+    abas.append(b);
+  });
+  const sair = el("button", { class: "btn contorno mini", type: "button", text: "Sair" });
+  sair.addEventListener("click", () => { salvarSessao(null); telaLogin(); });
+  app.append(el("div", { class: "wrap" }, [
+    el("div", { class: "topo" }, [
+      el("div", {}, [el("h1", { text: "Admin do portfólio" }), el("small", { text: sessao && sessao.email ? "Logada como " + sessao.email : "" })]),
+      el("div", { class: "acoes" }, [el("a", { class: "btn contorno mini", href: "../", target: "_blank", rel: "noopener", text: "Ver o site" }), sair])
+    ]),
+    abas, conteudo
+  ]));
+  mostrarAba(conteudo, atual);
+}
+
+async function mostrarAba(raiz, chave) {
+  const aba = ABAS[chave];
+  limpar(raiz);
+  const aviso = el("div", { class: "aviso", hidden: true, role: "status" });
+  const lista = el("div", { class: "lista" }, [el("div", { class: "vazio", text: "Carregando..." })]);
+  const novo = el("button", { class: "btn", type: "button", text: "+ " + aba.novo });
+  raiz.append(el("div", { class: "barra" }, [el("p", { text: aba.dica }), novo]), aviso, lista);
+
+  const falar = (texto, tipo) => { aviso.hidden = false; aviso.className = "aviso " + (tipo || "ok"); aviso.textContent = texto; };
+  let linhas = [];
+  async function carregar() {
+    try {
+      linhas = await rest(aba.tabela + "?select=*&order=" + aba.ordem) || [];
+      desenhar();
+    } catch (e) { tratarErro(e); }
+  }
+  function tratarErro(e) {
+    if (e.message === "sessao") { telaLogin("Sua sessão expirou. Entre de novo."); return; }
+    falar(e.message, "erro");
+    if (!linhas.length) limpar(lista);
+  }
+  async function salvar(id, dados) {
+    try {
+      if (id) await rest(aba.tabela + "?id=eq." + id, { metodo: "PATCH", corpo: dados, retorno: "minimal" });
+      else await rest(aba.tabela, { metodo: "POST", corpo: dados, retorno: "minimal" });
+      falar("Salvo.", "ok");
+      await carregar();
+      return true;
+    } catch (e) { tratarErro(e); return false; }
+  }
+  async function excluir(l) {
+    if (!confirm("Excluir \"" + (l.titulo || l.nome || "este item") + "\"? Não dá para desfazer.")) return;
+    try { await rest(aba.tabela + "?id=eq." + l.id, { metodo: "DELETE", retorno: "minimal" }); falar("Excluído.", "ok"); await carregar(); }
+    catch (e) { tratarErro(e); }
+  }
+
+  function desenhar() {
+    limpar(lista);
+    if (!linhas.length) { lista.append(el("div", { class: "vazio", text: "Nada por aqui ainda. Toque em \"+ " + aba.novo + "\"." })); return; }
+    linhas.forEach(l => lista.append(cartaoDe(chave, l, { salvar, excluir, editar: () => abrirFormulario(aba, l, salvar, linhas) })));
+  }
+  novo.addEventListener("click", () => abrirFormulario(aba, null, salvar, linhas));
+  carregar();
+}
+
+function cartaoDe(chave, l, acoes) {
+  let titulo = "", sub = "", extra = [], miniatura = null;
+  if (chave === "videos") {
+    titulo = l.titulo;
+    sub = [l.local, l.plataforma === "tt" ? "TikTok" : "YouTube", l.publicado ? "publicado" : "oculto"].filter(Boolean).join(" · ") + " · ordem " + l.ordem;
+    if (l.plataforma === "yt") miniatura = el("img", { src: "https://i.ytimg.com/vi/" + l.video_id + "/mqdefault.jpg", alt: "", loading: "lazy" });
+  } else if (chave === "marcas") {
+    titulo = l.nome;
+    sub = [l.email, l.telefone, "vindo de " + l.origem, dataBR((l.created_at || "").slice(0, 10))].filter(Boolean).join(" · ");
+    if (l.mensagem) extra.push(el("div", { class: "item-msg", text: l.mensagem }));
+    if (l.observacoes) extra.push(el("div", { class: "item-msg", text: "Anotação: " + l.observacoes }));
+  } else if (chave === "calendario") {
+    titulo = dataBR(l.data) + "  " + l.titulo + (l.feito ? "  (feito)" : "");
+    sub = [l.tipo, l.marca].filter(Boolean).join(" · ");
+  } else {
+    titulo = l.nome;
+    sub = [l.marca, l.status, l.inicio ? dataBR(l.inicio) + (l.fim ? " a " + dataBR(l.fim) : "") : ""].filter(Boolean).join(" · ");
+    if (l.resultado) extra.push(el("div", { class: "item-msg", text: l.resultado }));
+  }
+  const botoes = [];
+  if (chave === "marcas") {
+    const sel = el("select", { "aria-label": "Status de " + l.nome }, STATUS_MARCA.map(s => el("option", { value: s, text: s, selected: s === l.status })));
+    sel.addEventListener("change", () => acoes.salvar(l.id, { status: sel.value }));
+    botoes.push(sel);
+    const fone = String(l.telefone || "").replace(/\D/g, "");
+    if (fone.length >= 10) botoes.push(el("a", { class: "btn contorno mini", href: "https://wa.me/" + (fone.length <= 11 ? "55" : "") + fone, target: "_blank", rel: "noopener noreferrer", text: "WhatsApp" }));
+    if (l.email) botoes.push(el("a", { class: "btn contorno mini", href: "mailto:" + l.email, text: "E-mail" }));
+  }
+  if (chave === "calendario") {
+    const b = el("button", { class: "btn contorno mini", type: "button", text: l.feito ? "Desmarcar" : "Marcar como feito" });
+    b.addEventListener("click", () => acoes.salvar(l.id, { feito: !l.feito }));
+    botoes.push(b);
+  }
+  const ed = el("button", { class: "btn contorno mini", type: "button", text: "Editar" });
+  ed.addEventListener("click", acoes.editar);
+  const ex = el("button", { class: "btn perigo mini", type: "button", text: "Excluir" });
+  ex.addEventListener("click", () => acoes.excluir(l));
+  botoes.push(ed, ex);
+  return el("article", { class: "item" }, [
+    el("div", { class: "item-cab" }, [
+      el("div", { class: "item-txt" }, [el("b", { text: titulo }), el("span", { text: sub }), chave === "marcas" ? el("span", {}, [el("span", { class: "chip", text: l.status })]) : null]),
+      miniatura
+    ]),
+    ...extra,
+    el("div", { class: "item-acoes" }, botoes)
+  ]);
+}
+
+function abrirFormulario(aba, linha, salvar, linhas) {
+  const dlg = el("dialog", { "aria-labelledby": "dlg-titulo" });
+  const msg = el("div", { class: "aviso erro", role: "alert", hidden: true });
+  const campos = [];
+  aba.campos.forEach(c => {
+    const id = "f-" + c.k;
+    let entrada, valor = linha ? linha[c.k] : undefined;
+    if (c.k === "link") valor = linha ? linkDoVideo(linha) : "";
+    if (c.k === "ordem" && !linha) valor = linhas.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1;
+    if (c.k === "publicado" && !linha) valor = true;
+    if (c.k === "status" && !linha) valor = aba.tabela === "marcas" ? "novo" : (c.opcoes && c.opcoes[0]);
+    if (c.k === "tipo" && !linha) valor = c.opcoes[0];
+    if (c.t === "textarea") entrada = el("textarea", { id, required: c.obrig });
+    else if (c.t === "select") entrada = el("select", { id }, c.opcoes.map(o => el("option", { value: o, text: o })));
+    else entrada = el("input", { id, type: c.t === "check" ? "checkbox" : c.t, required: c.obrig, inputmode: c.t === "number" ? "numeric" : null });
+    if (c.t === "check") entrada.checked = !!valor; else if (valor != null) entrada.value = valor;
+    campos.push({ c, entrada });
+  });
+  const form = el("form", { method: "dialog" }, [msg]);
+  campos.forEach(({ c, entrada }) => {
+    if (c.t === "check") form.append(el("div", { class: "campo check" }, [entrada, el("label", { for: entrada.id, text: c.r })]));
+    else form.append(el("div", { class: "campo" }, [el("label", { for: entrada.id, text: c.r }), entrada, c.dica ? el("span", { class: "dica", text: c.dica }) : null]));
+  });
+  const cancelar = el("button", { class: "btn contorno", type: "button", text: "Cancelar" });
+  const ok = el("button", { class: "btn", type: "submit", text: "Salvar" });
+  form.append(el("div", { class: "form-acoes" }, [cancelar, ok]));
+  dlg.append(el("h2", { id: "dlg-titulo", text: linha ? "Editar" : aba.novo }), form);
+  document.body.append(dlg);
+  const fechar = () => { dlg.close(); dlg.remove(); };
+  cancelar.addEventListener("click", fechar);
+  dlg.addEventListener("cancel", e => { e.preventDefault(); fechar(); });
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const dados = {};
+    let erro = "";
+    campos.forEach(({ c, entrada }) => {
+      if (c.k === "link") {
+        const v = lerVideo(entrada.value);
+        if (!v) { erro = "Não reconheci esse link. Use um link do YouTube ou um link do TikTok com /video/ no endereço."; return; }
+        dados.plataforma = v.plataforma; dados.video_id = v.video_id;
+      } else if (c.t === "check") dados[c.k] = entrada.checked;
+      else if (c.t === "number") dados[c.k] = parseInt(entrada.value, 10) || 0;
+      else { const t = entrada.value.trim(); dados[c.k] = t === "" && !c.obrig ? null : t; }
+    });
+    if (erro) { msg.hidden = false; msg.textContent = erro; return; }
+    ok.disabled = true; ok.textContent = "Salvando...";
+    if (await salvar(linha ? linha.id : null, dados)) fechar();
+    else { ok.disabled = false; ok.textContent = "Salvar"; }
+  });
+  dlg.showModal();
+  const primeiro = form.querySelector("input,select,textarea");
+  if (primeiro) primeiro.focus();
+}
+
+/* ---------- início ---------- */
+(async function () {
+  if (!sessao) return telaLogin();
+  try {
+    const admin = await rest("rpc/is_admin", { metodo: "POST", corpo: {} });
+    if (admin === true) telaPainel(); else { salvarSessao(null); telaLogin(); }
+  } catch (e) { telaLogin(); }
+})();
+</script>
+</body>
+</html>

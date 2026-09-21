@@ -776,6 +776,13 @@ const CONFIG = {
   // Para o formulário enviar de verdade, crie um formulário em formspree.io (ou similar)
   // e cole o endereço aqui, ex.: "https://formspree.io/f/xxxxxxx". Vazio = a pessoa escolhe
   // WhatsApp ou e-mail na tela de confirmação.
+  // Banco de dados (Supabase). A chave abaixo é a PÚBLICA: pode ficar no site. Quem protege os dados são as regras RLS.
+  // NUNCA cole aqui a chave secreta (sb_secret_...). Com o banco ligado, os vídeos vêm do painel /login/ e os
+  // contatos do formulário caem na aba "Marcas e contatos" do admin.
+  supabase: {
+    url: "https://tzpjkbzkmaeyjiktmpie.supabase.co",
+    chave: "sb_publishable_SPp8r0D8hiWdcEVe8u_YRw_Ezb0I5tl"
+  },
   formEndpoint: "",
   // Quantos segundos a pessoa fica na página antes do card de captura aparecer
   capturaSegundos: 25
@@ -823,7 +830,7 @@ const DESTAQUES = [
   }
 ];
 
-/* Vídeos Experiências Narradas (todos rodam dentro do site) */
+/* Vídeos Experiências Narradas (todos rodam dentro do site). Esta lista é a reserva: se o banco responder, valem os vídeos do painel /login/. */
 const VIDEOS = [
   { titulo: "Chalé Lua",                local: "Pirenópolis",         prov: "yt", id: "ARMfs907Fbw", thumb: "img/thumb-chale-lua.jpg" },
   { titulo: "Flutuante Serra da Mesa",  local: "Uruaçu",              prov: "yt", id: "nmZHI9Psc44", thumb: "img/thumb-flutuante.jpg" },
@@ -1000,8 +1007,8 @@ document.addEventListener("keydown", e => {
   }
 });
 function criarMiniatura(v, selo, cta) {
-  const b = el("button", { class: "mini", type: "button", "aria-label": "Assistir ao vídeo: " + v.titulo }, [
-    el("img", { src: v.thumb, alt: "", loading: "lazy", width: 540, height: 960 })
+  const b = el("button", { class: "mini", type: "button", "aria-label": "Assistir ao vídeo: " + v.titulo, style: v.thumb ? null : "background:" + TONS[0] }, [
+    v.thumb ? el("img", { src: v.thumb, alt: "", loading: "lazy", width: 540, height: 960 }) : null
   ]);
   if (selo) b.append(el("span", { class: "dest-plat", text: selo }));
   b.append(el("span", { class: "play", "aria-hidden": "true" }));
@@ -1065,18 +1072,36 @@ document.querySelectorAll("[data-reservas]").forEach(n => { n.textContent = RESE
   }
 })();
 
-/* Vídeos Experiências Narradas */
-VIDEOS.forEach((v, i) => {
-  const cta = {
-    texto: "Quero um vídeo assim →", href: "#contato", externo: false,
-    aoClicar: () => {
-      const msg = $("#c-msg");
-      if (msg && !msg.value) msg.value = "Oi Luana, quero um vídeo como o de " + v.titulo + " para a minha hospedagem.";
-    }
-  };
-  const corpo = el("div", { class: "vid-corpo" }, [el("h3", { text: v.titulo }), el("span", { class: "vid-local", text: v.local })]);
-  $("#vidGrade").append(el("article", { class: "vid revelar", style: atraso(i % 4) }, [criarMiniatura(v, "", cta), corpo]));
-});
+/* Vídeos Experiências Narradas: começam com a lista do código (VIDEOS) e são trocados pelos do banco quando chegam */
+function desenharVideos(lista, animar) {
+  const grade = $("#vidGrade");
+  grade.replaceChildren();
+  lista.forEach((v, i) => {
+    const cta = {
+      texto: "Quero um vídeo assim →", href: "#contato", externo: false,
+      aoClicar: () => {
+        const msg = $("#c-msg");
+        if (msg && !msg.value) msg.value = "Oi Luana, quero um vídeo como o de " + v.titulo + " para a minha hospedagem.";
+      }
+    };
+    const corpo = el("div", { class: "vid-corpo" }, [el("h3", { text: v.titulo }), el("span", { class: "vid-local", text: v.local || "" })]);
+    grade.append(el("article", { class: "vid" + (animar ? " revelar" : ""), style: animar ? atraso(i % 4) : null }, [criarMiniatura(v, "", cta), corpo]));
+  });
+}
+desenharVideos(VIDEOS, true);
+(async function () {
+  const sb = CONFIG.supabase;
+  if (!sb || !sb.url) return;
+  try {
+    const r = await fetch(sb.url + "/rest/v1/videos?select=titulo,local,plataforma,video_id,thumb_url&publicado=eq.true&order=ordem.asc,created_at.asc", { headers: { apikey: sb.chave } });
+    if (!r.ok) return;
+    const lista = (await r.json()).map(x => ({
+      titulo: x.titulo, local: x.local, prov: x.plataforma, id: x.video_id,
+      thumb: x.thumb_url || (x.plataforma === "yt" ? "https://i.ytimg.com/vi/" + x.video_id + "/hqdefault.jpg" : "")
+    }));
+    if (JSON.stringify(lista.map(x => x.id)) !== JSON.stringify(VIDEOS.map(x => x.id))) desenharVideos(lista, false);
+  } catch (e) { /* sem internet ou banco fora do ar: fica a lista do código */ }
+})();
 
 /* Fotos UGC: texto curto + galeria com ampliação */
 PORQUES.forEach((q, i) => {
@@ -1178,6 +1203,17 @@ canais.forEach(c => {
 
 /* Envio de formulários (contato e captura) */
 async function enviar(dados) {
+  const sb = CONFIG.supabase;
+  if (sb && sb.url) {
+    try {
+      const r = await fetch(sb.url + "/rest/v1/marcas", {
+        method: "POST",
+        headers: { apikey: sb.chave, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ nome: dados.nome, email: dados.email || null, telefone: dados.telefone || null, mensagem: dados.mensagem || null, origem: dados.origem, status: "novo" })
+      });
+      return r.ok;
+    } catch (e) { return false; }
+  }
   if (!CONFIG.formEndpoint) return false;
   try {
     const r = await fetch(CONFIG.formEndpoint, { method: "POST", headers: { "Content-Type": "application/json", "Accept": "application/json" }, body: JSON.stringify(dados) });
