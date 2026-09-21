@@ -807,7 +807,7 @@ const RESERVAS = 88;
 const DESTAQUES = [
   {
     prov: "yt", id: "b49WhEAw0Sc", thumb: "img/thumb-viral.jpg",
-    plataforma: "Instagram", link: "https://www.instagram.com/p/DBCgQyHyTlY/",
+    plataforma: "Instagram", link: "https://www.instagram.com/luhcaper?stkn=bjV6dmtodHkxZGls", linkTexto: "Ver meu perfil no Instagram ↗",
     numero: "179", rotulo: "mil views no Reels",
     titulo: "Casa com cachoeira particular",
     contexto: "Cachoeira Sonho Meu, em Cocalzinho de Goiás: uma experiência narrada que viralizou no Instagram."
@@ -1014,9 +1014,9 @@ DESTAQUES.forEach((d, i) => {
     el("div", { class: "dest-rot", text: d.rotulo }),
     el("h3", { text: d.titulo }),
     el("p", { text: d.contexto }),
-    el("a", { class: "dest-link", href: d.link, target: "_blank", rel: "noopener noreferrer", text: "Ver o post original no " + d.plataforma + " ↗" })
+    el("a", { class: "dest-link", href: d.link, target: "_blank", rel: "noopener noreferrer", text: d.linkTexto || ("Ver o post original no " + d.plataforma + " ↗") })
   ]);
-  const cta = { texto: "Ver o post original no " + d.plataforma + " ↗", href: d.link, externo: true };
+  const cta = { texto: d.linkTexto || ("Ver o post original no " + d.plataforma + " ↗"), href: d.link, externo: true };
   $("#destGrade").append(el("article", { class: "dest revelar", style: atraso(i) }, [criarMiniatura(d, d.plataforma, cta), corpo]));
 });
 
