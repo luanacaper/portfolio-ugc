@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='32' fill='%2355613b'/%3E%3Ctext x='32' y='43' font-family='Arial' font-weight='800' font-size='34' text-anchor='middle' fill='%23ffbf85'%3EL%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
 :root{
@@ -262,13 +262,20 @@ section{scroll-margin-top:84px}
 .rodape small{display:block;width:100%;color:#c7d2cd;font-size:.85rem;border-top:1px solid rgba(255,255,255,.14);padding-top:18px}
 
 /* Card de captura */
-.modal{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:16px;background:rgba(10,24,20,.66);overflow-y:auto;animation:aparecer .3s ease}
-.modal-card{position:relative;width:100%;max-width:440px;background:#fff;border-radius:var(--raio-g);padding:32px 28px 28px;box-shadow:0 30px 80px rgba(0,0,0,.4);animation:subir .35s ease}
+.modal{position:fixed;inset:0;z-index:300;display:grid;place-items:center;padding:16px;background:rgba(24,30,17,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);overflow-y:auto;animation:aparecer .35s ease}
+.modal-card{position:relative;width:100%;max-width:460px;background:#f4f4ed;border-radius:28px;padding:34px 30px 26px;box-shadow:0 30px 80px rgba(0,0,0,.35);animation:subir .4s ease}
 .modal-card:focus{outline:none}
-.modal-card h2{font-size:1.7rem;line-height:1.12;letter-spacing:-.03em;font-weight:800;padding-right:36px}
-.modal-card > p{margin:10px 0 20px;color:var(--suave)}
-.fechar{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:none;background:var(--gelo);font-size:1.5rem;line-height:1;cursor:pointer;color:var(--tinta)}
-.fechar:hover{background:var(--laranja-claro)}
+.cap-eyebrow{display:block;font-size:.78rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--verde)}
+.modal-card h2{margin-top:10px;font-family:"Instrument Serif",Georgia,serif;font-size:clamp(2rem,6vw,2.5rem);line-height:1.05;letter-spacing:-.01em;font-weight:400;padding-right:32px;text-wrap:balance}
+.modal-card .cap-sub{margin:14px 0 22px;color:var(--suave);font-size:1rem;line-height:1.6}
+.modal-card .campo{margin-bottom:12px}
+.modal-card .campo input{padding:15px 18px;border:1.5px solid #dcdfd0;background:transparent;border-radius:16px}
+.modal-card .campo input::placeholder{color:#7d8171}
+.modal-card .campo input:focus{background:#fff}
+.modal-card .btn-bloco{margin-top:4px;min-height:52px;border-radius:16px}
+.cap-nota{margin-top:14px;text-align:center;font-size:.8rem;color:var(--suave)}
+.fechar{position:absolute;top:14px;right:14px;width:44px;height:44px;border-radius:50%;border:none;background:transparent;font-size:1.7rem;line-height:1;cursor:pointer;color:var(--suave);transition:background .2s,color .2s}
+.fechar:hover{background:rgba(85,97,59,.12);color:var(--tinta)}
 @keyframes aparecer{from{opacity:0}to{opacity:1}}
 @keyframes subir{from{opacity:0;transform:translateY(20px) scale(.98)}to{opacity:1;transform:none}}
 body.trava{overflow:hidden}
@@ -532,23 +539,29 @@ body.trava{overflow:hidden}
   </div>
 </footer>
 
-<!-- CARD DE CAPTURA: aparece sozinho depois de 7 segundos, uma vez por visita -->
+<!-- CARD DE CAPTURA: aparece sozinho depois de um tempo na página (CONFIG.capturaSegundos), uma vez por visita -->
 <div class="modal" id="captura" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="cap-titulo" tabindex="-1">
     <button class="fechar" type="button" id="capFechar" aria-label="Fechar">&times;</button>
     <div id="capForm">
+      <span class="cap-eyebrow">Vamos conversar?</span>
       <h2 id="cap-titulo">Quer meu mídia kit completo?</h2>
-      <p>Deixe seu nome e e-mail e eu te mando o material com meus números, formatos e valores.</p>
+      <p class="cap-sub">Deixe seu contato e eu te mando o material com meus números, formatos e valores.</p>
       <form id="formCaptura">
         <div class="campo">
-          <label for="k-nome">Nome</label>
-          <input id="k-nome" name="nome" type="text" autocomplete="name" required>
+          <label class="sr" for="k-nome">Seu nome</label>
+          <input id="k-nome" name="nome" type="text" placeholder="Seu nome" autocomplete="name" required>
         </div>
         <div class="campo">
-          <label for="k-email">E-mail</label>
-          <input id="k-email" name="email" type="email" autocomplete="email" required>
+          <label class="sr" for="k-email">Seu e-mail</label>
+          <input id="k-email" name="email" type="email" placeholder="Seu e-mail" autocomplete="email" required>
+        </div>
+        <div class="campo">
+          <label class="sr" for="k-tel">Seu telefone (opcional)</label>
+          <input id="k-tel" name="telefone" type="tel" placeholder="Telefone (opcional)" autocomplete="tel">
         </div>
         <button class="btn btn-primario btn-bloco" type="submit">Quero receber</button>
+        <p class="cap-nota">Sem spam, prometo. Só conteúdo relevante.</p>
       </form>
     </div>
     <div class="conf" id="capConf" tabindex="-1" hidden></div>
@@ -573,7 +586,9 @@ const CONFIG = {
   // Para o formulário enviar de verdade, crie um formulário em formspree.io (ou similar)
   // e cole o endereço aqui, ex.: "https://formspree.io/f/xxxxxxx". Vazio = a pessoa escolhe
   // WhatsApp ou e-mail na tela de confirmação.
-  formEndpoint: ""
+  formEndpoint: "",
+  // Quantos segundos a pessoa fica na página antes do card do mídia kit aparecer
+  capturaSegundos: 25
 };
 
 /* Marcas da faixa da capa (nomes que aparecem no letreiro) */
@@ -970,16 +985,16 @@ document.addEventListener("keydown", e => {
 $("#formCaptura").addEventListener("submit", async e => {
   e.preventDefault();
   const f = new FormData(e.target);
-  const nome = String(f.get("nome")).trim(), email = String(f.get("email")).trim();
+  const nome = String(f.get("nome")).trim(), email = String(f.get("email")).trim(), tel = String(f.get("telefone")).trim();
   const btn = e.target.querySelector("button[type=submit]");
   btn.disabled = true; btn.textContent = "Enviando...";
-  const ok = await enviar({ origem: "midia-kit", nome, email });
+  const ok = await enviar({ origem: "midia-kit", nome, email, telefone: tel });
   $("#capForm").hidden = true;
   mostrarConfirmacao($("#capConf"), ok, nome, "Quero o mídia kit",
-    "Oi Luana, aqui é " + nome + " (" + email + "). Quero receber o seu mídia kit completo.");
+    "Oi Luana, aqui é " + nome + " (" + email + (tel ? ", " + tel : "") + "). Quero receber o seu mídia kit completo.");
 });
 
-/* Aparece sozinho depois de 7 segundos, uma vez por visita */
+/* Aparece sozinho depois de um tempo na página (CONFIG.capturaSegundos), uma vez por visita */
 (function () {
   let jaViu = false;
   try { jaViu = sessionStorage.getItem("capturaVista") === "1"; } catch (e) {}
@@ -987,7 +1002,7 @@ $("#formCaptura").addEventListener("submit", async e => {
   setTimeout(() => {
     try { sessionStorage.setItem("capturaVista", "1"); } catch (e) {}
     abrirCaptura();
-  }, 7000);
+  }, CONFIG.capturaSegundos * 1000);
 })();
 
 /* Entrada suave ao rolar + contadores */
