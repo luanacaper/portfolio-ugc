@@ -114,7 +114,7 @@ section{scroll-margin-top:84px}
 
 /* Blocos de foto e vídeo (espaços reservados) */
 .foto{position:relative;border-radius:var(--raio-g);overflow:hidden;background:linear-gradient(160deg,#55613b 0%,#8a9a63 55%,#d4691f 130%);box-shadow:var(--sombra-g)}
-.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 80%}
+.foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 30%}
 .foto.r45{aspect-ratio:4/5}
 .legenda{position:absolute;left:14px;bottom:14px;max-width:calc(100% - 28px);background:rgba(255,255,255,.94);color:var(--tinta);font-size:.8rem;font-weight:700;padding:6px 14px;border-radius:999px}
 .selo{position:absolute;top:16px;right:16px;z-index:2;background:var(--laranja-claro);color:var(--tinta);font-weight:800;font-size:.85rem;text-transform:uppercase;letter-spacing:.06em;padding:8px 16px;border-radius:999px;transform:rotate(6deg);box-shadow:0 6px 16px rgba(20,32,28,.2)}
@@ -179,11 +179,7 @@ section{scroll-margin-top:84px}
 .res-txt{flex:1 1 280px;min-width:0}
 .res-tit{font-size:clamp(1.4rem,3vw,2rem);font-weight:800;letter-spacing:-.02em;line-height:1.15}
 .res-txt p+p{margin-top:8px;color:rgba(255,255,255,.9)}
-.res-pontos{--cols:22;display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:clamp(4px,.9vw,9px);margin-top:28px}
-.res-pontos i{display:block;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.16);transition:background .25s}
-.res-pontos i.on{background:var(--laranja-claro)}
-.res-rodape{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;margin-top:22px}
-.res-rodape span{font-size:.9rem;color:rgba(255,255,255,.82)}
+.res-rodape{display:flex;margin-top:22px}
 .res-replay{background:transparent;color:#fff;border-color:rgba(255,255,255,.6)}
 .res-replay:hover{background:rgba(255,255,255,.12)}
 
@@ -206,13 +202,18 @@ section{scroll-margin-top:84px}
 .result .etq{margin-bottom:12px}
 .result strong{display:block;font-size:clamp(2rem,4vw,2.8rem);font-weight:800;letter-spacing:-.04em;color:var(--verde);line-height:1}
 .result p{margin-top:10px;color:var(--suave);font-size:.98rem}
-.dep-grade{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.dep{background:#fff;color:var(--tinta);border-radius:var(--raio);padding:26px 24px;box-shadow:var(--sombra-g);display:flex;flex-direction:column;gap:14px;min-width:0}
-.dep blockquote{font-size:1.05rem;line-height:1.55;font-weight:500}
-.dep footer{display:flex;align-items:center;gap:12px;background:none;padding:0;color:inherit;margin-top:auto}
-.avatar{flex:none;width:44px;height:44px;border-radius:50%;background:var(--laranja-claro);display:grid;place-items:center;font-weight:800}
-.dep cite{font-style:normal;font-weight:800;display:block;line-height:1.2}
-.dep small{color:var(--suave);font-size:.85rem}
+.dep-grade{display:grid;gap:16px}
+.dep-dest{background:#fff;color:var(--tinta);border-radius:var(--raio-g);padding:clamp(22px,4vw,36px);box-shadow:var(--sombra-g);display:flex;flex-direction:column;gap:14px}
+.dep-cab{display:flex;align-items:center;gap:14px}
+.dep-cab b{display:block;font-size:1.1rem;line-height:1.25}
+.dep-cab .estrelas{margin-top:4px}
+.dep-dest p{font-size:1.08rem;line-height:1.65}
+.dep-chat{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:16px}
+.balao{background:#eef0df;color:var(--tinta);border-radius:22px 22px 22px 6px;padding:20px 22px;box-shadow:var(--sombra);display:flex;flex-direction:column;gap:10px;min-width:0}
+.balao .msg{font-size:1.05rem;line-height:1.5;font-weight:600;overflow-wrap:anywhere}
+.balao-nome{font-weight:800;font-size:.85rem;color:var(--verde-esc)}
+.balao small{margin-top:auto;padding-top:4px;font-size:.8rem;font-weight:600;color:var(--suave)}
+.avatar{flex:none;width:48px;height:48px;border-radius:50%;background:var(--laranja-claro);display:grid;place-items:center;font-weight:800;font-size:1.1rem}
 
 /* Contato */
 .contato-grade{display:grid;grid-template-columns:1.1fr .9fr;gap:clamp(24px,4vw,56px);align-items:start}
@@ -283,12 +284,10 @@ body.trava{overflow:hidden}
   .dest-grade{grid-template-columns:1fr;justify-items:center}
   .dest{width:100%;max-width:380px}
   .contato-grade{grid-template-columns:1fr}
-  .dep-grade{grid-template-columns:1fr}
 }
 @media (max-width:560px){
   .vid-grade,.serv-grade{grid-template-columns:1fr;justify-items:center}
   .vid{width:100%;max-width:380px}
-  .res-pontos{--cols:11}
   .numeros-capa{gap:8px}
   .n-card{padding:12px 10px}
   .n-card span{font-size:.75rem}
@@ -347,7 +346,7 @@ body.trava{overflow:hidden}
 
     <div class="capa-foto revelar" style="--d:.1s">
       <div class="foto r45">
-        <img src="foto-luana.jpg" alt="Luana Caper sorrindo, de gola alta verde-oliva" width="900" height="1125" fetchpriority="high">
+        <img src="foto-luana.jpg" alt="Luana Caper sorrindo em uma praia, de óculos de sol, segurando um produto" width="900" height="1125" fetchpriority="high">
         <span class="selo">novo</span>
       </div>
     </div>
@@ -400,9 +399,7 @@ body.trava{overflow:hidden}
           <p>Esses conteúdos viralizaram no TikTok e no Instagram e geraram mais de 88 reservas imediatas para hospedagem.</p>
         </div>
       </div>
-      <div class="res-pontos" id="resPontos" aria-hidden="true"></div>
       <div class="res-rodape">
-        <span aria-hidden="true">Cada ponto é uma reserva.</span>
         <button class="btn res-replay" id="resReplay" type="button">↻ Ver de novo</button>
       </div>
       <p class="sr">Mais de 88 reservas imediatas.</p>
@@ -612,12 +609,25 @@ const RESULTADOS = [
   { cliente: "Cliente 03", numero: "+00%", texto: "Descreva aqui o resultado da campanha, por exemplo alcance, cliques ou reservas." }
 ];
 
-/* Depoimentos (4) */
-const DEPOIMENTOS = [
-  { nome: "Cliente 01", empresa: "Marca 01", texto: "Depoimento do Cliente 01 entra aqui. Conte em uma ou duas frases como foi trabalhar com a Luana." },
-  { nome: "Cliente 02", empresa: "Marca 02", texto: "Depoimento do Cliente 02 entra aqui. Conte em uma ou duas frases como foi trabalhar com a Luana." },
-  { nome: "Cliente 03", empresa: "Marca 03", texto: "Depoimento do Cliente 03 entra aqui. Conte em uma ou duas frases como foi trabalhar com a Luana." },
-  { nome: "Cliente 04", empresa: "Marca 04", texto: "Depoimento do Cliente 04 entra aqui. Conte em uma ou duas frases como foi trabalhar com a Luana." }
+/* Avaliação em destaque (aparece grande, no topo dos depoimentos) */
+const AVALIACAO = {
+  autor: "Pousada Aimê Maresias",
+  estrelas: 5,
+  paragrafos: [
+    "A Luana é daquelas criadoras que entendem a essência da Aimê como poucas. Desde a primeira vez que esteve aqui, entregou um dos nossos melhores cases, e agora, na segunda visita, só confirmou o quanto tem sensibilidade e estratégia no olhar.",
+    "Cada detalhe do conteúdo é pensado com intenção, do roteiro às imagens, que conseguem traduzir exatamente o que a gente quer transmitir: uma experiência real, leve e encantadora.",
+    "Obrigada por, mais uma vez, fazer parte da nossa história, Luana. É sempre um prazer te receber por aqui 💚"
+  ]
+};
+
+/* Mensagens de clientes (estilo WhatsApp). nome: deixe "" se não quiser mostrar quem enviou.
+   mensagens: uma ou mais falas do mesmo cliente. */
+const MENSAGENS = [
+  { nome: "Marketing Lusotur", mensagens: ["LUUUH O SEU VÍDEO FICOU INCRÍVEL !!!", "mulher vc arrasou demais!!!"] },
+  { nome: "", mensagens: ["Era exatamente o que estávamos procurando! Você desenvolveu o conteúdo de forma excelente, com uma narrativa envolvente e vídeos de alta qualidade."] },
+  { nome: "", mensagens: ["Ficou muito bom, superou minhas expectativas você arrasou 😍❤️"] },
+  { nome: "", mensagens: ["Roteiro impecável, captação e edição perfeitooooooos! 🤩"] },
+  { nome: "", mensagens: ["Luh, estão impecáveis! Adoramos tá? Aprovadíssimos 💗"] }
 ];
 
 /* Degradês usados nos blocos de capa (na ordem, repetindo). Só cores da paleta. */
@@ -735,21 +745,17 @@ DESTAQUES.forEach((d, i) => {
   $("#destGrade").append(el("article", { class: "dest revelar", style: atraso(i) }, [criarPlayer(d, d.plataforma), corpo]));
 });
 
-/* Reservas imediatas: contador + um ponto por reserva, animados ao aparecer na tela */
+/* Reservas imediatas: o número sobe de 0 até o total quando aparece na tela */
 (function () {
-  const pontos = $("#resPontos"), num = $("#resNum");
-  for (let i = 0; i < RESERVAS; i++) pontos.append(el("i"));
-  const lista = [...pontos.children];
+  const num = $("#resNum");
   let timer = null;
-  function zerar() { lista.forEach(p => p.classList.remove("on")); num.textContent = "0"; }
-  function completo() { lista.forEach(p => p.classList.add("on")); num.textContent = String(RESERVAS); }
+  function completo() { num.textContent = String(RESERVAS); }
   function animar() {
     clearInterval(timer);
     if (reduzido) { completo(); return; }
-    zerar();
+    num.textContent = "0";
     let n = 0;
     timer = setInterval(() => {
-      lista[n].classList.add("on");
       n++;
       num.textContent = String(n);
       if (n >= RESERVAS) clearInterval(timer);
@@ -757,7 +763,7 @@ DESTAQUES.forEach((d, i) => {
   }
   $("#resReplay").addEventListener("click", animar);
   if ("IntersectionObserver" in window && !reduzido) {
-    zerar();
+    num.textContent = "0";
     const io = new IntersectionObserver(en => {
       if (en[0].isIntersecting) { io.disconnect(); animar(); }
     }, { threshold: 0.4 });
@@ -802,16 +808,30 @@ RESULTADOS.forEach((r, i) => {
   ]));
 });
 
-/* Depoimentos */
-DEPOIMENTOS.forEach((d, i) => {
-  $("#depGrade").append(el("figure", { class: "dep revelar", style: atraso(i % 2) }, [
-    el("blockquote", { text: "“" + d.texto + "”" }),
-    el("footer", {}, [
-      el("span", { class: "avatar", "aria-hidden": "true", text: d.nome.charAt(0) }),
-      el("span", {}, [el("cite", { text: d.nome }), el("small", { text: d.empresa })])
+/* Depoimentos: avaliação em destaque + mensagens de clientes */
+(function () {
+  const grade = $("#depGrade");
+  const estrelas = n => "★".repeat(n) + "☆".repeat(5 - n);
+  const cab = el("div", { class: "dep-cab" }, [
+    el("span", { class: "avatar", "aria-hidden": "true", text: AVALIACAO.autor.charAt(0) }),
+    el("span", {}, [
+      el("b", { text: AVALIACAO.autor }),
+      el("div", { class: "estrelas", "aria-hidden": "true", text: estrelas(AVALIACAO.estrelas) }),
+      el("span", { class: "sr", text: "Avaliação: " + AVALIACAO.estrelas + " de 5 estrelas" })
     ])
-  ]));
-});
+  ]);
+  grade.append(el("article", { class: "dep-dest revelar" }, [cab].concat(AVALIACAO.paragrafos.map(t => el("p", { text: t })))));
+
+  const chat = el("div", { class: "dep-chat" });
+  MENSAGENS.forEach((m, i) => {
+    const filhos = [];
+    if (m.nome) filhos.push(el("span", { class: "balao-nome", text: m.nome }));
+    m.mensagens.forEach(t => filhos.push(el("p", { class: "msg", text: t })));
+    filhos.push(el("small", { text: "Mensagem no WhatsApp" }));
+    chat.append(el("figure", { class: "balao revelar", style: atraso(i % 3) }, filhos));
+  });
+  grade.append(chat);
+})();
 
 /* Canais de contato e rodapé */
 const canais = [
