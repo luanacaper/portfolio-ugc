@@ -129,9 +129,19 @@ section{scroll-margin-top:84px}
 .flut-txt small{display:block;font-size:.85rem;line-height:1.3;color:var(--suave);margin-top:2px}
 .f1{top:24%;right:-9%}
 .f2{bottom:10%;left:-10%}
+
+/* Cursor de demonstração: mostra alguém "clicando" nos 2 cartões flutuantes, pra dar vida à capa */
+.demo-cursor{position:absolute;top:0;left:0;width:0;height:0;pointer-events:none;z-index:6;opacity:0;transition:transform .85s cubic-bezier(.22,.61,.36,1),opacity .35s ease}
+.demo-cursor.ativo{opacity:1}
+.dcp-anel{position:absolute;left:-20px;top:-20px;width:40px;height:40px;border-radius:50%;border:2px solid var(--laranja-claro);opacity:0}
+.dcp-nucleo{position:absolute;left:-10px;top:-10px;width:20px;height:20px;border-radius:50%;background:var(--laranja);border:3px solid #fff;box-shadow:0 6px 16px rgba(20,32,28,.32)}
+.demo-cursor.clicar .dcp-anel{animation:dcAnel .6s ease-out}
+.demo-cursor.clicar .dcp-nucleo{animation:dcNucleo .35s ease}
+@keyframes dcAnel{0%{opacity:.85;transform:scale(.3)}100%{opacity:0;transform:scale(1.7)}}
+@keyframes dcNucleo{0%,100%{transform:scale(1)}45%{transform:scale(.72)}}
 .f2 .flut-in{animation-duration:7.5s;animation-delay:-2.5s}
-.flutuante:hover,.flutuante:focus-visible{scale:1.06}
-.flutuante:hover .flut-in,.flutuante:focus-visible .flut-in{animation-play-state:paused;box-shadow:0 20px 44px rgba(20,32,28,.26)}
+.flutuante:hover,.flutuante:focus-visible,.flutuante.clicando{scale:1.06}
+.flutuante:hover .flut-in,.flutuante:focus-visible .flut-in,.flutuante.clicando .flut-in{animation-play-state:paused;box-shadow:0 20px 44px rgba(20,32,28,.26)}
 .flutuante:active{scale:.97}
 @keyframes flutuar{0%,100%{transform:translateY(0) rotate(-.6deg)}50%{transform:translateY(-11px) rotate(.6deg)}}
 
@@ -370,6 +380,8 @@ body.trava{overflow:hidden}
   .flut-txt small{font-size:.54rem;margin-top:1px;line-height:1.2}
   .f1{top:22%;right:-8px}
   .f2{bottom:6%;left:-30%}
+  .dcp-anel{left:-14px;top:-14px;width:28px;height:28px}
+  .dcp-nucleo{left:-7px;top:-7px;width:14px;height:14px;border-width:2px}
   .marcas{margin-top:20px;padding:10px 0}
   .marcas-rot{font-size:.62rem}
   .trilho li{font-size:.85rem}
@@ -1042,6 +1054,48 @@ document.querySelectorAll("[data-reservas]").forEach(n => { n.textContent = RESE
     });
   });
   capa.addEventListener("pointerleave", () => cards.forEach(c => { c.style.setProperty("--px", "0px"); c.style.setProperty("--py", "0px"); }));
+})();
+
+/* Cursor de demonstração: mexe sozinho nos 2 cartões flutuantes da capa, pra mostrar que dá pra clicar neles.
+   É só visual: não dispara o clique de verdade, então a página não sai do lugar. Some com movimento reduzido. */
+(function () {
+  if (reduzido) return;
+  const palco = $(".capa-foto"), cards = [...document.querySelectorAll(".flutuante")];
+  if (!palco || cards.length < 2) return;
+  const cursor = el("div", { class: "demo-cursor", "aria-hidden": "true" }, [el("span", { class: "dcp-anel" }), el("span", { class: "dcp-nucleo" })]);
+  palco.append(cursor);
+
+  function pontoDe(card) {
+    const alvo = card.querySelector(".flut-in") || card;
+    const a = alvo.getBoundingClientRect(), p = palco.getBoundingClientRect();
+    return { x: Math.round(a.left - p.left + a.width * 0.3), y: Math.round(a.top - p.top + a.height * 0.5) };
+  }
+  const mover = (x, y) => { cursor.style.transform = "translate(" + x + "px," + y + "px)"; };
+  const esperar = ms => new Promise(r => setTimeout(r, ms));
+  async function clicar(card) {
+    const p = pontoDe(card);
+    mover(p.x, p.y);
+    await esperar(900);
+    cursor.classList.add("clicar");
+    await esperar(280);
+    card.classList.add("clicando");
+    await esperar(370);
+    card.classList.remove("clicando");
+    cursor.classList.remove("clicar");
+  }
+  (async function ciclo() {
+    await esperar(1800);
+    while (true) {
+      if (document.hidden) { await esperar(1500); continue; }
+      cursor.classList.add("ativo");
+      await clicar(cards[0]);
+      await esperar(1300);
+      await clicar(cards[1]);
+      await esperar(1000);
+      cursor.classList.remove("ativo");
+      await esperar(6500);
+    }
+  })();
 })();
 
 /* Reservas imediatas: o número sobe de 0 até o total quando aparece na tela */
