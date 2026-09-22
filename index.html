@@ -1078,8 +1078,9 @@ document.addEventListener("keydown", e => {
   }
 });
 function criarMiniatura(v, selo, cta) {
-  const b = el("button", { class: "mini", type: "button", "aria-label": "Assistir ao vídeo: " + v.titulo, style: v.thumb ? null : "background:" + TONS[0] }, [
-    v.thumb ? el("img", { src: v.thumb, alt: "", loading: "lazy", width: 540, height: 960 }) : null
+  const thumb = v.thumb || (v.prov === "yt" ? "https://i.ytimg.com/vi/" + v.id + "/hqdefault.jpg" : "");
+  const b = el("button", { class: "mini", type: "button", "aria-label": "Assistir ao vídeo: " + v.titulo, style: thumb ? null : "background:" + TONS[0] }, [
+    thumb ? el("img", { src: thumb, alt: "", loading: "lazy", width: 540, height: 960 }) : null
   ]);
   if (selo) b.append(el("span", { class: "dest-plat", text: selo }));
   b.append(el("span", { class: "play", "aria-hidden": "true" }));
