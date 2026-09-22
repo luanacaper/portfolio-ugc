@@ -201,7 +201,6 @@ section{scroll-margin-top:84px}
 /* Gestão de criadores: os cartões tocam no site, igual aos outros vídeos (reaproveita .vid e .mini) */
 .cab strong{color:var(--tinta);font-weight:800}
 .criadores-grade{display:grid;grid-template-columns:repeat(4,1fr);gap:clamp(8px,2vw,20px)}
-.criador-stats{display:flex;gap:14px;margin-top:4px;color:var(--suave);font-size:.85rem;font-weight:700}
 
 
 /* Player ampliado */
@@ -435,7 +434,6 @@ body.trava{overflow:hidden}
 
   /* Vídeos: 4 por linha */
   .criadores-grade{grid-template-columns:repeat(2,1fr);gap:8px}
-  .criador-stats{font-size:.78rem;gap:10px}
   .vid-grade{gap:6px}
   .vid{padding:5px 5px 8px;border-radius:14px}
   .vid .mini{border-radius:10px}
@@ -896,18 +894,18 @@ const VIDEOS_ESTETICOS = [
    curtidas/comentarios: números reais do post original no Instagram, coletados na hora do reenvio (o Instagram não expõe visualizações).
    linkOriginal: o post no Instagram, pra dar crédito e contexto. titulo: troque por algo real quando quiser (ex.: nome da pousada). */
 const CRIADORES = [
-  { titulo: "Trabalho 01", prov: "yt", id: "yIOSfis4nKM", curtidas: 3,    comentarios: 48, linkOriginal: "https://www.instagram.com/reel/DKc-cJRR-Rp/" },
+  { titulo: "Trabalho 01", prov: "yt", id: "ylOSfis4nKM", curtidas: 3,    comentarios: 48, linkOriginal: "https://www.instagram.com/reel/DKc-cJRR-Rp/" },
   { titulo: "Trabalho 02", prov: "yt", id: "xwEJpNd79Zg", curtidas: 245,  comentarios: 3,  linkOriginal: "https://www.instagram.com/reel/DSpRDgZACmA/" },
   { titulo: "Trabalho 03", prov: "yt", id: "6e0KnMPG-sI", curtidas: 116,  comentarios: 2,  linkOriginal: "https://www.instagram.com/reel/DHvo4vMs_oJ/" },
-  { titulo: "Trabalho 04", prov: "yt", id: "MACPX3GHXI0", curtidas: 84,   comentarios: 85, linkOriginal: "https://www.instagram.com/reel/Da2i6KnulJJ/" },
+  { titulo: "Trabalho 04", prov: "yt", id: "MACPX3GHXl0", curtidas: 84,   comentarios: 85, linkOriginal: "https://www.instagram.com/reel/Da2i6KnulJJ/" },
   { titulo: "Trabalho 05", prov: "yt", id: "mZmAMO63Lh0", curtidas: 485,  comentarios: 4,  linkOriginal: "https://www.instagram.com/reel/DSc9zqAjnXb/" },
   { titulo: "Trabalho 06", prov: "yt", id: "sA1zt2H62AQ", curtidas: 471,  comentarios: 11, linkOriginal: "https://www.instagram.com/reel/DHWu85HSDbG/" },
-  { titulo: "Trabalho 07", prov: "yt", id: "z79iCmXezal", curtidas: 408,  comentarios: 19, linkOriginal: "https://www.instagram.com/reel/DGdGz5Pu6L7/" },
+  { titulo: "Trabalho 07", prov: "yt", id: "z79iCmXezaI", curtidas: 408,  comentarios: 19, linkOriginal: "https://www.instagram.com/reel/DGdGz5Pu6L7/" },
   { titulo: "Trabalho 08", prov: "yt", id: "LeAgMmL7VRk", curtidas: 1239, comentarios: 15, linkOriginal: "https://www.instagram.com/reel/DD7uE8sPlFz/" },
-  { titulo: "Trabalho 09", prov: "yt", id: "Tmp_M4TqlrY", curtidas: 165,  comentarios: 36, linkOriginal: "https://www.instagram.com/reel/DWzczofGGJy/" },
+  { titulo: "Trabalho 09", prov: "yt", id: "Tmp_M4TqIrY", curtidas: 165,  comentarios: 36, linkOriginal: "https://www.instagram.com/reel/DWzczofGGJy/" },
   { titulo: "Trabalho 10", prov: "yt", id: "lgevgdAa4sM", curtidas: 150,  comentarios: 13, linkOriginal: "https://www.instagram.com/reel/DTBWENnknXB/" },
   { titulo: "Trabalho 11", prov: "yt", id: "2jOwdrVEc60", curtidas: 65,   comentarios: 8,  linkOriginal: "https://www.instagram.com/reel/Db5Y32vR-AC/" },
-  { titulo: "Trabalho 12", prov: "yt", id: "KLQB1brj1I8", curtidas: 3,    comentarios: 7,  linkOriginal: "https://www.instagram.com/reel/DK0Ay_Zu0xS/" }
+  { titulo: "Trabalho 12", prov: "yt", id: "KLQB1brj1l8", curtidas: 3,    comentarios: 7,  linkOriginal: "https://www.instagram.com/reel/DK0Ay_Zu0xS/" }
 ];
 
 /* Por que fotos UGC convertem mais (3 pontos curtos) */
@@ -1218,16 +1216,11 @@ desenharVideos(VIDEOS_ESTETICOS, true, "#vidGradeEstetico");
   } catch (e) { /* sem internet ou banco fora do ar: fica a lista do código */ }
 })();
 
-/* Gestão de criadores: toca dentro do site; embaixo ficam as curtidas e comentários reais do post original e o crédito pro Instagram */
+/* Gestão de criadores: toca dentro do site; embaixo fica o crédito pro post original no Instagram */
 CRIADORES.forEach((c, i) => {
   const cta = { texto: "Quero um trabalho assim →", href: "#contato", externo: false };
-  const stats = el("div", { class: "criador-stats" }, [
-    el("span", {}, [el("span", { "aria-hidden": "true", text: "♥ " }), document.createTextNode(c.curtidas.toLocaleString("pt-BR")), el("span", { class: "sr", text: " curtidas" })]),
-    el("span", {}, [el("span", { "aria-hidden": "true", text: "💬 " }), document.createTextNode(c.comentarios.toLocaleString("pt-BR")), el("span", { class: "sr", text: " comentários" })])
-  ]);
   const corpo = el("div", { class: "vid-corpo" }, [
     el("h3", { text: c.titulo }),
-    stats,
     el("a", { class: "dest-link", href: c.linkOriginal, target: "_blank", rel: "noopener noreferrer", text: "Ver original no Instagram ↗" })
   ]);
   $("#criadoresGrade").append(el("article", { class: "vid revelar", style: atraso(i % 4) }, [criarMiniatura(c, "", cta), corpo]));
