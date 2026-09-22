@@ -346,7 +346,7 @@ body.trava{overflow:hidden}
 }
 
 /* Menu de celular e colunas únicas */
-@media (max-width:820px){
+@media (max-width:980px){
   .btn-menu{display:inline-flex}
   .nav{display:none;position:absolute;left:0;right:0;top:100%;flex-direction:column;align-items:stretch;gap:4px;background:#fff;padding:12px var(--pad) 18px;border-bottom:1px solid var(--linha);box-shadow:var(--sombra)}
   .nav.aberto{display:flex}
@@ -535,6 +535,7 @@ body.trava{overflow:hidden}
       <a href="#sobre">Sobre</a>
       <a href="#destaques">Destaques</a>
       <a href="#trabalhos">Vídeos</a>
+      <a href="#esteticos">Estéticos</a>
       <a href="#criadores">Criadores</a>
       <a href="#fotos">Fotos</a>
       <a href="#servicos">Serviços</a>
@@ -649,8 +650,20 @@ body.trava{overflow:hidden}
   </div>
 </section>
 
-<!-- 5. GESTÃO DE CRIADORES -->
-<section class="secao" id="criadores" aria-labelledby="t-criad">
+<!-- 5. VÍDEOS ESTÉTICOS -->
+<section class="secao" id="esteticos" aria-labelledby="t-estet">
+  <div class="container">
+    <div class="cab">
+      <p class="etiqueta revelar">Vídeos</p>
+      <h2 class="titulo revelar" id="t-estet" style="--d:.05s">Vídeos <span class="serif">estéticos</span></h2>
+      <p class="revelar" style="--d:.1s">Sem narração, no ritmo certo: ideal pra vender o clima do lugar em Reels e Stories.</p>
+    </div>
+    <div class="vid-grade" id="vidGradeEstetico"></div>
+  </div>
+</section>
+
+<!-- 6. GESTÃO DE CRIADORES -->
+<section class="secao gelo" id="criadores" aria-labelledby="t-criad">
   <div class="container">
     <div class="cab">
       <p class="etiqueta revelar">Gestão de criadores</p>
@@ -661,7 +674,7 @@ body.trava{overflow:hidden}
   </div>
 </section>
 
-<!-- 6. FOTOS UGC DA HOSPEDAGEM -->
+<!-- 7. FOTOS UGC DA HOSPEDAGEM -->
 <section class="secao" id="fotos" aria-labelledby="t-fotos">
   <div class="container">
     <div class="cab">
@@ -674,7 +687,7 @@ body.trava{overflow:hidden}
   </div>
 </section>
 
-<!-- 7. COMO EU TE AJUDO -->
+<!-- 8. COMO EU TE AJUDO -->
 <section class="secao gelo" id="servicos" aria-labelledby="t-serv">
   <div class="container">
     <div class="cab">
@@ -685,7 +698,7 @@ body.trava{overflow:hidden}
   </div>
 </section>
 
-<!-- 8. NÚMEROS E DEPOIMENTOS -->
+<!-- 9. NÚMEROS E DEPOIMENTOS -->
 <section class="secao escuro" id="numeros" aria-labelledby="t-num">
   <div class="container">
     <div class="cab">
@@ -704,7 +717,7 @@ body.trava{overflow:hidden}
   </div>
 </section>
 
-<!-- 9. BORA CRIAR JUNTOS -->
+<!-- 10. BORA CRIAR JUNTOS -->
 <section class="secao gelo" id="contato" aria-labelledby="t-contato">
   <div class="container">
     <div class="cab">
@@ -738,7 +751,7 @@ body.trava{overflow:hidden}
 
 </main>
 
-<!-- 10. RODAPÉ -->
+<!-- 11. RODAPÉ -->
 <footer class="rodape">
   <div class="container rodape-grade">
     <strong data-nome>Luana Caper</strong>
@@ -881,6 +894,11 @@ const VIDEOS = [
   { titulo: "Mirante do Ipê",           local: "Pirenópolis",         prov: "yt", id: "5bYZJZyPr2g", thumb: "img/thumb-mirante-ipe.jpg" }
 ];
 
+/* Vídeos estéticos (rodam dentro do site, igual aos Experiências Narradas). titulo: troque por algo real quando quiser. */
+const VIDEOS_ESTETICOS = [
+  { titulo: "Vídeo estético 01", local: "", prov: "yt", id: "Zxgts_Ntkhg", thumb: "" }
+];
+
 /* Trabalhos de gestão de criadores: cada um abre o reel original no Instagram (não dá pra reproduzir Reels dentro do site).
    titulo: troque por algo real quando quiser (ex.: nome da pousada), hoje está genérico porque você ainda não me passou. */
 const CRIADORES = [
@@ -1000,7 +1018,7 @@ menu.addEventListener("click", e => { if (e.target.closest("a")) menuAbrir(false
 document.addEventListener("keydown", e => {
   if (e.key === "Escape" && menu.classList.contains("aberto")) { menuAbrir(false); btnMenu.focus(); }
 });
-window.matchMedia("(min-width:821px)").addEventListener("change", e => { if (e.matches) menuAbrir(false); });
+window.matchMedia("(min-width:981px)").addEventListener("change", e => { if (e.matches) menuAbrir(false); });
 
 /* Formata número e anima contador */
 function formatar(n) { return Math.round(n).toLocaleString("pt-BR"); }
@@ -1174,8 +1192,8 @@ document.querySelectorAll("[data-reservas]").forEach(n => { n.textContent = RESE
 })();
 
 /* Vídeos Experiências Narradas: começam com a lista do código (VIDEOS) e são trocados pelos do banco quando chegam */
-function desenharVideos(lista, animar) {
-  const grade = $("#vidGrade");
+function desenharVideos(lista, animar, gradeSel) {
+  const grade = $(gradeSel || "#vidGrade");
   grade.replaceChildren();
   lista.forEach((v, i) => {
     const cta = {
@@ -1190,6 +1208,7 @@ function desenharVideos(lista, animar) {
   });
 }
 desenharVideos(VIDEOS, true);
+desenharVideos(VIDEOS_ESTETICOS, true, "#vidGradeEstetico");
 (async function () {
   const sb = CONFIG.supabase;
   if (!sb || !sb.url) return;
