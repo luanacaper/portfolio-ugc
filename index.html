@@ -1045,6 +1045,7 @@ function urlPlayer(v) {
 const vm = $("#vm"), vmPlayer = $("#vmPlayer"), vmCta = $("#vmCta");
 let vmFoco = null;
 function abrirVideo(v, cta) {
+  if (window.registrarMetrica) registrarMetrica("video", v.titulo);
   vmFoco = document.activeElement;
   vmPlayer.replaceChildren(el("iframe", { src: urlPlayer(v), title: "Vídeo: " + v.titulo, allow: "autoplay; encrypted-media; picture-in-picture; fullscreen", allowfullscreen: true, referrerpolicy: "strict-origin-when-cross-origin" }));
   $("#vmTitulo").textContent = v.titulo;
@@ -1343,6 +1344,48 @@ async function enviar(dados) {
     return r.ok;
   } catch (e) { return false; }
 }
+
+/* Métricas simples: 1 evento por visita e 1 evento por vídeo aberto. Sem cookies, sem dado pessoal
+   (a "sessão" é só um id aleatório guardado na aba, some quando ela fecha). Aparece no admin em Métricas do portfólio. */
+(function () {
+  const sb = CONFIG.supabase;
+  if (!sb || !sb.url) return;
+  let sessao;
+  try {
+    sessao = sessionStorage.getItem("metricaSessao");
+    if (!sessao) { sessao = crypto.randomUUID(); sessionStorage.setItem("metricaSessao", sessao); }
+  } catch (e) { sessao = String(Math.random()).slice(2); }
+
+  function origemAtual() {
+    const p = new URLSearchParams(location.search);
+    if (p.get("utm_source")) return p.get("utm_source").trim().replace(/^\w/, c => c.toUpperCase());
+    const ref = document.referrer;
+    if (!ref) return "Direto";
+    let host = "";
+    try { host = new URL(ref).hostname.replace(/^www\./, ""); } catch (e) { return "Direto"; }
+    if (/instagram\.com/.test(host)) return "Instagram";
+    if (/tiktok\.com/.test(host)) return "TikTok";
+    if (/facebook\.com|fb\.com/.test(host)) return "Facebook";
+    if (/wa\.me|whatsapp\.com/.test(host)) return "WhatsApp";
+    if (/youtube\.com|youtu\.be/.test(host)) return "YouTube";
+    if (/google\./.test(host)) return "Google";
+    if (/linkedin\.com/.test(host)) return "LinkedIn";
+    if (/^(x\.com|t\.co|twitter\.com)$/.test(host)) return "X (Twitter)";
+    return host;
+  }
+  const origem = origemAtual();
+
+  window.registrarMetrica = function (tipo, detalhe) {
+    try {
+      fetch(sb.url + "/rest/v1/metricas", {
+        method: "POST",
+        headers: { apikey: sb.chave, "Content-Type": "application/json", Prefer: "return=minimal" },
+        body: JSON.stringify({ tipo, origem, referrer: document.referrer || null, detalhe: detalhe || null, sessao })
+      });
+    } catch (e) {}
+  };
+  registrarMetrica("visita");
+})();
 function mostrarConfirmacao(caixa, enviado, nome, assunto, texto) {
   caixa.replaceChildren();
   if (enviado) {

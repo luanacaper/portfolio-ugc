@@ -84,6 +84,19 @@ table.planilha td.vazio{text-align:center;color:var(--suave);padding:24px 12px}
 table.planilha select{padding:5px 9px;border:1.5px solid #d7dac8;border-radius:999px;background:#fff;font-weight:600;font-size:.82rem}
 table.planilha a{color:var(--verde-esc);font-weight:600}
 
+/* Métricas do portfólio */
+.metricas-cartoes{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
+.metrica-cartao{flex:1;min-width:140px;background:#fff;border:1px solid var(--linha);border-radius:20px;padding:16px 18px;display:grid;gap:2px}
+.metrica-cartao b{font-size:1.7rem;letter-spacing:-.02em}
+.metrica-cartao span{color:var(--suave);font-size:.85rem;font-weight:600}
+.metricas-grade{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.metricas-grade h3{font-size:1rem;margin-bottom:8px}
+.metricas-grade table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--linha);border-radius:16px;overflow:hidden;font-size:.88rem}
+.metricas-grade th,.metricas-grade td{padding:8px 12px;text-align:left;border-bottom:1px solid var(--linha)}
+.metricas-grade th{background:var(--gelo);font-size:.72rem;text-transform:uppercase;color:var(--suave)}
+.metricas-grade td:nth-child(2),.metricas-grade td:nth-child(3),.metricas-grade th:nth-child(2),.metricas-grade th:nth-child(3){text-align:right;white-space:nowrap}
+@media (max-width:640px){.metricas-grade{grid-template-columns:1fr}}
+
 /* Formulário em janela */
 dialog{width:min(520px,calc(100vw - 24px));max-height:calc(100vh - 24px);border:0;border-radius:24px;padding:22px 20px;box-shadow:0 30px 80px rgba(0,0,0,.35);overflow:auto}
 dialog::backdrop{background:rgba(24,30,17,.55)}
@@ -131,6 +144,10 @@ const ABAS = {
       { k: "mensagem", r: "Mensagem que a pessoa enviou", t: "textarea" },
       { k: "observacoes", r: "Observação", t: "textarea" }
     ]
+  },
+  metricas: {
+    rotulo: "Métricas do portfólio", tabela: "metricas", ordem: "created_at.desc",
+    dica: "Quantas pessoas abriram o portfólio, o que mais olharam e de onde vieram — o que te diz qual nicho está puxando mais."
   },
   calendario: {
     rotulo: "Calendário", tabela: "calendario", ordem: "data.asc", novo: "Novo compromisso",
@@ -282,6 +299,7 @@ function telaPainel() {
 
 async function mostrarAba(raiz, chave) {
   if (chave === "marcas") return mostrarMarcas(raiz);
+  if (chave === "metricas") return mostrarMetricas(raiz);
   const aba = ABAS[chave];
   limpar(raiz);
   const aviso = el("div", { class: "aviso", hidden: true, role: "status" });
@@ -437,6 +455,82 @@ async function mostrarMarcas(raiz) {
     URL.revokeObjectURL(url);
   });
   novo.addEventListener("click", () => abrirFormulario(aba, null, salvar, linhas));
+  carregar();
+}
+
+/* Aba "Métricas do portfólio": visitas, sessões (pessoas) e vídeos mais abertos, com filtro de período */
+async function mostrarMetricas(raiz) {
+  const aba = ABAS.metricas;
+  limpar(raiz);
+  const aviso = el("div", { class: "aviso", hidden: true, role: "status" });
+  const periodo = el("select", { "aria-label": "Período" }, [
+    el("option", { value: "7", text: "Últimos 7 dias" }),
+    el("option", { value: "30", text: "Últimos 30 dias", selected: true }),
+    el("option", { value: "90", text: "Últimos 90 dias" }),
+    el("option", { value: "0", text: "Desde sempre" })
+  ]);
+  const cartoes = el("div", { class: "metricas-cartoes" });
+  const colOrigem = el("div", {});
+  const colVideos = el("div", {});
+  raiz.append(
+    el("div", { class: "barra" }, [el("p", { text: aba.dica }), periodo]),
+    aviso,
+    cartoes,
+    el("div", { class: "metricas-grade" }, [colOrigem, colVideos])
+  );
+
+  const falar = (texto, tipo) => { aviso.hidden = false; aviso.className = "aviso " + (tipo || "ok"); aviso.textContent = texto; };
+
+  function contagem(linhas, chave) {
+    const mapa = new Map();
+    linhas.forEach(l => { const k = chave(l); mapa.set(k, (mapa.get(k) || 0) + 1); });
+    return [...mapa.entries()].sort((a, b) => b[1] - a[1]);
+  }
+  function cartaoNumero(n, rotulo) {
+    return el("div", { class: "metrica-cartao" }, [el("b", { text: String(n) }), el("span", { text: rotulo })]);
+  }
+  function tabelaContagem(pares, colRotulo, total) {
+    if (!pares.length) return el("p", { class: "vazio", text: "Sem dados nesse período." });
+    return el("table", {}, [
+      el("thead", {}, [el("tr", {}, [el("th", { text: colRotulo }), el("th", { text: "Vezes" }), el("th", { text: "%" })])]),
+      el("tbody", {}, pares.slice(0, 12).map(([nome, n]) => el("tr", {}, [
+        el("td", { text: nome }),
+        el("td", { text: String(n) }),
+        el("td", { text: total ? Math.round(n / total * 100) + "%" : "—" })
+      ])))
+    ]);
+  }
+
+  async function carregar() {
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos);
+    cartoes.append(el("div", { class: "vazio", text: "Carregando..." }));
+    try {
+      const dias = Number(periodo.value);
+      let filtro = "tipo=in.(visita,video)&select=tipo,origem,detalhe,sessao,created_at&order=created_at.desc&limit=5000";
+      if (dias) filtro += "&created_at=gte." + new Date(Date.now() - dias * 86400000).toISOString();
+      desenhar(await rest(aba.tabela + "?" + filtro) || []);
+    } catch (e) {
+      limpar(cartoes);
+      if (e.message === "sessao") { telaLogin("Sua sessão expirou. Entre de novo."); return; }
+      falar(e.message, "erro");
+    }
+  }
+
+  function desenhar(linhas) {
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos);
+    const visitas = linhas.filter(l => l.tipo === "visita");
+    const videos = linhas.filter(l => l.tipo === "video");
+    const pessoas = new Set(linhas.map(l => l.sessao)).size;
+    cartoes.append(
+      cartaoNumero(visitas.length, "Visitas"),
+      cartaoNumero(pessoas, "Pessoas (aprox.)"),
+      cartaoNumero(videos.length, "Vídeos abertos")
+    );
+    colOrigem.append(el("h3", { text: "De onde vieram" }), tabelaContagem(contagem(visitas, l => l.origem || "Direto"), "Origem", visitas.length));
+    colVideos.append(el("h3", { text: "O que mais olharam" }), tabelaContagem(contagem(videos, l => l.detalhe || "Sem título"), "Vídeo", videos.length));
+  }
+
+  periodo.addEventListener("change", carregar);
   carregar();
 }
 
