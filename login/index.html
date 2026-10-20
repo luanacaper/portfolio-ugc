@@ -119,6 +119,16 @@ const CHAVE_SESSAO = "luana-admin-sessao";
 /* As abas do painel. Para criar uma aba nova, crie a tabela no Supabase e acrescente um bloco aqui. */
 const STATUS_MARCA = ["novo", "conversando", "proposta", "cliente", "perdido"];
 const ROTULO_STATUS = { novo: "Lead", conversando: "Conversando", proposta: "Proposta", cliente: "Cliente", perdido: "Perdido" };
+const NICHOS_GERAL = ["gastronomia-assinaturas", "casa-decoracao", "beleza-saude", "tech-infoprodutos", "viagem"];
+const ROTULO_NICHO = {
+  "gastronomia-assinaturas": "Alimentação & Lifestyle Saudável",
+  "casa-decoracao": "Casa, Decoração & Achadinhos",
+  "beleza-saude": "Beleza, Saúde & Bem-Estar",
+  "tech-infoprodutos": "Tech, Apps & Infoprodutos",
+  "viagem": "Viagem"
+};
+const TAMANHO_BADGE = ["", "pequeno", "grande"];
+const ROTULO_TAMANHO = { "": "Padrão", pequeno: "Pequeno (62px)", grande: "Grande (94px)" };
 const ABAS = {
   videos: {
     rotulo: "Vídeos", tabela: "videos", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
@@ -170,6 +180,51 @@ const ABAS = {
       { k: "inicio", r: "Início", t: "date" },
       { k: "fim", r: "Fim", t: "date" },
       { k: "resultado", r: "Resultado", t: "textarea" }
+    ]
+  },
+  videos_geral: {
+    rotulo: "Vídeos (Geral)", tabela: "videos_geral", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
+    dica: "Catálogo por nicho do Portfólio Geral. Sem link ainda? Deixa em branco que aparece como \"Em breve\".",
+    campos: [
+      { k: "titulo", r: "Título", t: "text", obrig: true },
+      { k: "nicho", r: "Nicho", t: "select", opcoes: NICHOS_GERAL, rotulos: ROTULO_NICHO },
+      { k: "nota", r: "Nota (ex.: ROAS 7,54)", t: "text" },
+      { k: "link", r: "Link do vídeo (opcional)", t: "text", dica: "Cole o link do YouTube (Shorts ou normal) ou do TikTok (com /video/ no endereço). Em branco = \"Em breve\"." },
+      { k: "ordem", r: "Ordem na página (1 aparece primeiro)", t: "number" },
+      { k: "publicado", r: "Mostrar no site", t: "check" }
+    ]
+  },
+  marcas_logos: {
+    rotulo: "Marcas (logos)", tabela: "marcas_logos", ordem: "ordem.asc,created_at.asc", novo: "Nova logo",
+    dica: "Carrossel \"Marcas que confiaram no meu trabalho\". Pra marca nova, além de cadastrar aqui, manda o arquivo da imagem pra colocar em img/marcas/.",
+    campos: [
+      { k: "nome", r: "Nome da marca", t: "text", obrig: true },
+      { k: "arquivo", r: "Arquivo da imagem", t: "text", obrig: true, dica: "Só o nome do arquivo, ex.: milky-moo.png (sem img/marcas/ na frente)." },
+      { k: "fundo", r: "Cor do selo de fundo (opcional)", t: "text", dica: "Só pra logo clara/branca que some no fundo claro. Ex.: #14130f. Em branco = sem selo." },
+      { k: "tamanho", r: "Tamanho do selo", t: "select", opcoes: TAMANHO_BADGE, rotulos: ROTULO_TAMANHO },
+      { k: "ordem", r: "Ordem no carrossel", t: "number" },
+      { k: "publicado", r: "Mostrar no site", t: "check" }
+    ]
+  },
+  depoimentos_geral: {
+    rotulo: "Depoimentos", tabela: "depoimentos_geral", ordem: "ordem.asc,created_at.asc", novo: "Novo depoimento",
+    dica: "Seção \"O que dizem sobre o trabalho\" do Portfólio Geral.",
+    campos: [
+      { k: "marca", r: "Marca", t: "text", obrig: true },
+      { k: "texto", r: "Depoimento", t: "textarea", obrig: true },
+      { k: "ctx", r: "Linha de contexto (ex.: ROAS 7,54)", t: "text" },
+      { k: "ordem", r: "Ordem na página", t: "number" },
+      { k: "publicado", r: "Mostrar no site", t: "check" }
+    ]
+  },
+  servicos_geral: {
+    rotulo: "Serviços", tabela: "servicos_geral", ordem: "ordem.asc,created_at.asc", novo: "Novo serviço",
+    dica: "Seção \"O que podemos criar juntos?\" do Portfólio Geral.",
+    campos: [
+      { k: "titulo", r: "Título do serviço", t: "text", obrig: true },
+      { k: "texto", r: "Descrição curta", t: "textarea", obrig: true },
+      { k: "ordem", r: "Ordem na página", t: "number" },
+      { k: "publicado", r: "Mostrar no site", t: "check" }
     ]
   }
 };
@@ -268,8 +323,8 @@ function telaLogin(erro) {
   });
   app.append(el("div", { class: "login" }, [el("div", { class: "cartao" }, [
     el("span", { class: "logo", "aria-hidden": "true", text: "L" }),
-    el("h1", { text: "Admin do portfólio" }),
-    el("p", { class: "sub", text: "Área só para a Luana. Entre para editar vídeos, contatos, calendário e campanhas." }),
+    el("h1", { text: "Admin dos portfólios" }),
+    el("p", { class: "sub", text: "Área só para a Luana. Entre para editar o conteúdo dos dois portfólios, contatos, calendário e campanhas." }),
     form
   ])]));
   email.focus();
@@ -289,7 +344,7 @@ function telaPainel() {
   sair.addEventListener("click", () => { salvarSessao(null); telaLogin(); });
   app.append(el("div", { class: "wrap" }, [
     el("div", { class: "topo" }, [
-      el("div", {}, [el("h1", { text: "Admin do portfólio" }), el("small", { text: sessao && sessao.email ? "Logada como " + sessao.email : "" })]),
+      el("div", {}, [el("h1", { text: "Admin dos portfólios" }), el("small", { text: sessao && sessao.email ? "Logada como " + sessao.email : "" })]),
       el("div", { class: "acoes" }, [el("a", { class: "btn contorno mini", href: "../", target: "_blank", rel: "noopener", text: "Ver o site" }), sair])
     ]),
     abas, conteudo
@@ -330,7 +385,7 @@ async function mostrarAba(raiz, chave) {
     } catch (e) { tratarErro(e); return false; }
   }
   async function excluir(l) {
-    if (!confirm("Excluir \"" + (l.titulo || l.nome || "este item") + "\"? Não dá para desfazer.")) return;
+    if (!confirm("Excluir \"" + (l.titulo || l.nome || l.marca || "este item") + "\"? Não dá para desfazer.")) return;
     try { await rest(aba.tabela + "?id=eq." + l.id, { metodo: "DELETE", retorno: "minimal" }); falar("Excluído.", "ok"); await carregar(); }
     catch (e) { tratarErro(e); }
   }
@@ -540,6 +595,22 @@ function cartaoDe(chave, l, acoes) {
     titulo = l.titulo;
     sub = [l.local, l.plataforma === "tt" ? "TikTok" : "YouTube", l.publicado ? "publicado" : "oculto"].filter(Boolean).join(" · ") + " · ordem " + l.ordem;
     if (l.plataforma === "yt") miniatura = el("img", { src: "https://i.ytimg.com/vi/" + l.video_id + "/mqdefault.jpg", alt: "", loading: "lazy" });
+  } else if (chave === "videos_geral") {
+    titulo = l.titulo;
+    sub = [ROTULO_NICHO[l.nicho] || l.nicho, l.nota, l.video_id ? (l.plataforma === "tt" ? "TikTok" : "YouTube") : "em breve", l.publicado ? "publicado" : "oculto"].filter(Boolean).join(" · ") + " · ordem " + l.ordem;
+    if (l.plataforma === "yt" && l.video_id) miniatura = el("img", { src: "https://i.ytimg.com/vi/" + l.video_id + "/mqdefault.jpg", alt: "", loading: "lazy" });
+  } else if (chave === "marcas_logos") {
+    titulo = l.nome;
+    sub = [l.fundo ? "selo " + l.fundo : null, ROTULO_TAMANHO[l.tamanho || ""], l.publicado ? "publicado" : "oculto"].filter(Boolean).join(" · ") + " · ordem " + l.ordem;
+    miniatura = el("img", { src: "../img/marcas/" + l.arquivo, alt: "", loading: "lazy", style: "object-fit:contain;background:" + (l.fundo || "#fff") });
+  } else if (chave === "depoimentos_geral") {
+    titulo = l.marca;
+    sub = [l.ctx, l.publicado ? "publicado" : "oculto"].filter(Boolean).join(" · ") + " · ordem " + l.ordem;
+    extra.push(el("div", { class: "item-msg", text: l.texto }));
+  } else if (chave === "servicos_geral") {
+    titulo = l.titulo;
+    sub = (l.publicado ? "publicado" : "oculto") + " · ordem " + l.ordem;
+    extra.push(el("div", { class: "item-msg", text: l.texto }));
   } else if (chave === "calendario") {
     titulo = dataBR(l.data) + "  " + l.titulo + (l.feito ? "  (feito)" : "");
     sub = [l.tipo, l.marca].filter(Boolean).join(" · ");
@@ -576,7 +647,7 @@ function abrirFormulario(aba, linha, salvar, linhas) {
   aba.campos.forEach(c => {
     const id = "f-" + c.k;
     let entrada, valor = linha ? linha[c.k] : undefined;
-    if (c.k === "link") valor = linha ? linkDoVideo(linha) : "";
+    if (c.k === "link") valor = linha && linha.video_id ? linkDoVideo(linha) : "";
     if (c.k === "ordem" && !linha) valor = linhas.reduce((m, x) => Math.max(m, x.ordem || 0), 0) + 1;
     if (c.k === "publicado" && !linha) valor = true;
     if (c.k === "status" && !linha) valor = aba.tabela === "marcas" ? "novo" : (c.opcoes && c.opcoes[0]);
@@ -606,6 +677,7 @@ function abrirFormulario(aba, linha, salvar, linhas) {
     let erro = "";
     campos.forEach(({ c, entrada }) => {
       if (c.k === "link") {
+        if (!entrada.value.trim() && !c.obrig) { dados.plataforma = null; dados.video_id = null; return; }
         const v = lerVideo(entrada.value);
         if (!v) { erro = "Não reconheci esse link. Use um link do YouTube ou um link do TikTok com /video/ no endereço."; return; }
         dados.plataforma = v.plataforma; dados.video_id = v.video_id;
