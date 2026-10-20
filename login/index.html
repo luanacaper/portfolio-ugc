@@ -184,11 +184,12 @@ const ABAS = {
   },
   videos_geral: {
     rotulo: "Vídeos (Geral)", tabela: "videos_geral", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
-    dica: "Catálogo por nicho do Portfólio Geral. Sem link ainda? Deixa em branco que aparece como \"Em breve\".",
+    dica: "Catálogo por nicho do Portfólio Geral. Sem link ainda? Deixa em branco que aparece como \"Em breve\". A \"Marca\" é o que aparece em destaque na miniatura pro público; \"Título\" e \"Nota\" são só pra você se localizar aqui no painel.",
     campos: [
-      { k: "titulo", r: "Título", t: "text", obrig: true },
+      { k: "titulo", r: "Título (uso interno, não aparece no site)", t: "text", obrig: true },
+      { k: "marca", r: "Marca (aparece na miniatura, pro público)", t: "text", obrig: true },
       { k: "nicho", r: "Nicho", t: "select", opcoes: NICHOS_GERAL, rotulos: ROTULO_NICHO },
-      { k: "nota", r: "Nota (ex.: ROAS 7,54)", t: "text" },
+      { k: "nota", r: "Nota interna (ex.: ROAS 7,54)", t: "text" },
       { k: "link", r: "Link do vídeo (opcional)", t: "text", dica: "Cole o link do YouTube (Shorts ou normal) ou do TikTok (com /video/ no endereço). Em branco = \"Em breve\"." },
       { k: "ordem", r: "Ordem na página (1 aparece primeiro)", t: "number" },
       { k: "publicado", r: "Mostrar no site", t: "check" }
