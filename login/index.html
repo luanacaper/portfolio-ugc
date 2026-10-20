@@ -129,6 +129,8 @@ const ROTULO_NICHO = {
 };
 const TAMANHO_BADGE = ["", "pequeno", "grande"];
 const ROTULO_TAMANHO = { "": "Padrão", pequeno: "Pequeno (62px)", grande: "Grande (94px)" };
+const SITES_UTM = { geral: "https://luanacaper.github.io/portifolio/", viagem: "https://luanacaper.github.io/portfolio-ugc/" };
+const ROTULO_SITE_UTM = { geral: "Portfólio Geral", viagem: "Portfolio Viagem" };
 const ABAS = {
   videos: {
     rotulo: "Vídeos", tabela: "videos", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
@@ -226,6 +228,15 @@ const ABAS = {
       { k: "texto", r: "Descrição curta", t: "textarea", obrig: true },
       { k: "ordem", r: "Ordem na página", t: "number" },
       { k: "publicado", r: "Mostrar no site", t: "check" }
+    ]
+  },
+  links_utm: {
+    rotulo: "Links UTM", tabela: "links_utm", ordem: "created_at.desc", novo: "Novo link",
+    dica: "Gera um link rastreável. Toda visita por ele aparece na aba Métricas, em \"De onde vieram\", com o nome que você der aqui.",
+    campos: [
+      { k: "nome", r: "Nome (só pra você identificar)", t: "text", obrig: true, dica: "Ex.: Inscrição no diretório XPTO" },
+      { k: "site", r: "Qual portfólio", t: "select", opcoes: Object.keys(SITES_UTM), rotulos: ROTULO_SITE_UTM },
+      { k: "fonte", r: "Nome da origem (utm_source)", t: "text", obrig: true, dica: "Sem espaço/acento, ex.: linktree, diretorio-xpto. É esse nome que vai aparecer nas Métricas." }
     ]
   }
 };
@@ -590,6 +601,11 @@ async function mostrarMetricas(raiz) {
   carregar();
 }
 
+function linkUtm(l) {
+  const base = SITES_UTM[l.site] || SITES_UTM.geral;
+  return base + "?utm_source=" + encodeURIComponent(l.fonte || "");
+}
+
 function cartaoDe(chave, l, acoes) {
   let titulo = "", sub = "", extra = [], miniatura = null;
   if (chave === "videos") {
@@ -615,6 +631,10 @@ function cartaoDe(chave, l, acoes) {
   } else if (chave === "calendario") {
     titulo = dataBR(l.data) + "  " + l.titulo + (l.feito ? "  (feito)" : "");
     sub = [l.tipo, l.marca].filter(Boolean).join(" · ");
+  } else if (chave === "links_utm") {
+    titulo = l.nome;
+    sub = ROTULO_SITE_UTM[l.site] || l.site;
+    extra.push(el("div", { class: "item-msg", text: linkUtm(l) }));
   } else {
     titulo = l.nome;
     sub = [l.marca, l.status, l.inicio ? dataBR(l.inicio) + (l.fim ? " a " + dataBR(l.fim) : "") : ""].filter(Boolean).join(" · ");
@@ -624,6 +644,16 @@ function cartaoDe(chave, l, acoes) {
   if (chave === "calendario") {
     const b = el("button", { class: "btn contorno mini", type: "button", text: l.feito ? "Desmarcar" : "Marcar como feito" });
     b.addEventListener("click", () => acoes.salvar(l.id, { feito: !l.feito }));
+    botoes.push(b);
+  }
+  if (chave === "links_utm") {
+    const b = el("button", { class: "btn contorno mini", type: "button", text: "Copiar link" });
+    b.addEventListener("click", () => {
+      navigator.clipboard.writeText(linkUtm(l)).then(() => {
+        b.textContent = "Copiado!";
+        setTimeout(() => { b.textContent = "Copiar link"; }, 1600);
+      });
+    });
     botoes.push(b);
   }
   const ed = el("button", { class: "btn contorno mini", type: "button", text: "Editar" });
