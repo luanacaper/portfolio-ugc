@@ -48,14 +48,30 @@ button,input,select,textarea{font:inherit;color:inherit}
 .aviso.erro{background:#fbeceb;color:var(--erro);border:1px solid #e6b8b4}
 .aviso.ok{background:#e8f1e4;color:var(--verde-esc);border:1px solid #c9dbc1}
 
-/* Painel */
-.topo{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:6px 0 14px}
-.topo h1{font-size:1.3rem;letter-spacing:-.02em}
-.topo small{display:block;color:var(--suave);font-size:.8rem}
-.topo .acoes{display:flex;gap:8px;flex-wrap:wrap}
-.abas{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:10px}
-.aba{flex:none;padding:9px 16px;border-radius:999px;border:2px solid var(--linha);background:#fff;font-weight:700;cursor:pointer}
-.aba[aria-selected="true"]{background:var(--verde);border-color:var(--verde);color:#fff}
+/* Painel com menu lateral */
+.painel-layout{display:flex;align-items:flex-start;min-height:100vh}
+.lateral{flex:none;width:260px;min-height:100vh;background:#fff;border-right:1px solid var(--linha);padding:20px 16px;display:flex;flex-direction:column;position:sticky;top:0}
+.lateral-marca{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.lateral-marca .logo{margin:0}
+.lateral-marca h1{font-size:1.05rem;letter-spacing:-.02em}
+.lateral-marca small{display:block;color:var(--suave);font-size:.74rem;overflow-wrap:anywhere}
+.lateral-grupo{margin-bottom:6px}
+.lateral-grupo-titulo{font-size:.72rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--suave);padding:14px 10px 6px}
+.lateral-item{display:block;width:100%;text-align:left;padding:10px 12px;border-radius:12px;border:0;background:none;font-weight:700;font-size:.92rem;color:var(--tinta);cursor:pointer}
+.lateral-item:hover{background:var(--gelo)}
+.lateral-item[aria-selected="true"]{background:var(--verde);color:#fff}
+.lateral-rodape{margin-top:auto;padding-top:14px;border-top:1px solid var(--linha);display:flex;flex-direction:column;gap:8px}
+.principal{flex:1;min-width:0;padding:22px 24px}
+.principal .wrap{max-width:900px;margin:0;padding:0}
+@media (max-width:820px){
+  .painel-layout{flex-direction:column}
+  .lateral{width:100%;min-height:0;position:static;border-right:0;border-bottom:1px solid var(--linha);padding:14px 16px}
+  .lateral-grupos{display:flex;gap:16px;overflow-x:auto;padding-bottom:4px}
+  .lateral-grupo{flex:none;margin-bottom:0}
+  .lateral-item{white-space:nowrap}
+  .lateral-rodape{flex-direction:row;margin-top:12px;padding-top:12px}
+  .principal{padding:16px}
+}
 .barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .barra p{color:var(--suave);font-size:.9rem}
 .lista{display:grid;gap:10px}
@@ -250,6 +266,11 @@ const ABAS = {
     ]
   }
 };
+const GRUPOS = [
+  { titulo: "Viagem (Portfolio UGC)", abas: ["videos", "marcas", "metricas", "calendario", "campanhas"] },
+  { titulo: "Geral", abas: ["videos_geral", "marcas_logos", "depoimentos_geral", "servicos_geral"] },
+  { titulo: "Ferramentas", abas: ["links_utm"] }
+];
 
 /* ---------- utilidades ---------- */
 const app = document.getElementById("app");
@@ -356,20 +377,38 @@ function telaPainel() {
   limpar(app);
   let atual = "videos";
   const conteudo = el("div", {});
-  const abas = el("div", { class: "abas", role: "tablist", "aria-label": "Seções do admin" });
-  Object.keys(ABAS).forEach(k => {
-    const b = el("button", { class: "aba", role: "tab", type: "button", text: ABAS[k].rotulo, "aria-selected": String(k === atual) });
-    b.addEventListener("click", () => { atual = k; abas.querySelectorAll(".aba").forEach(x => x.setAttribute("aria-selected", String(x === b))); mostrarAba(conteudo, k); });
-    abas.append(b);
+  const itensNav = [];
+  const lateralGrupos = el("div", { class: "lateral-grupos", role: "tablist", "aria-label": "Seções do admin", "aria-orientation": "vertical" });
+  GRUPOS.forEach(g => {
+    const grupo = el("div", { class: "lateral-grupo" }, [el("div", { class: "lateral-grupo-titulo", text: g.titulo })]);
+    g.abas.forEach(k => {
+      const b = el("button", { class: "lateral-item", role: "tab", type: "button", text: ABAS[k].rotulo, "aria-selected": String(k === atual) });
+      b.addEventListener("click", () => {
+        atual = k;
+        itensNav.forEach(x => x.setAttribute("aria-selected", String(x === b)));
+        mostrarAba(conteudo, k);
+      });
+      itensNav.push(b);
+      grupo.append(b);
+    });
+    lateralGrupos.append(grupo);
   });
   const sair = el("button", { class: "btn contorno mini", type: "button", text: "Sair" });
   sair.addEventListener("click", () => { salvarSessao(null); telaLogin(); });
-  app.append(el("div", { class: "wrap" }, [
-    el("div", { class: "topo" }, [
-      el("div", {}, [el("h1", { text: "Admin dos portfólios" }), el("small", { text: sessao && sessao.email ? "Logada como " + sessao.email : "" })]),
-      el("div", { class: "acoes" }, [el("a", { class: "btn contorno mini", href: "../", target: "_blank", rel: "noopener", text: "Ver o site" }), sair])
+  const lateral = el("div", { class: "lateral" }, [
+    el("div", { class: "lateral-marca" }, [
+      el("span", { class: "logo", "aria-hidden": "true", text: "L" }),
+      el("div", {}, [el("h1", { text: "Admin dos portfólios" }), el("small", { text: sessao && sessao.email ? sessao.email : "" })])
     ]),
-    abas, conteudo
+    lateralGrupos,
+    el("div", { class: "lateral-rodape" }, [
+      el("a", { class: "btn contorno mini", href: "../", target: "_blank", rel: "noopener", text: "Ver o site" }),
+      sair
+    ])
+  ]);
+  app.append(el("div", { class: "painel-layout" }, [
+    lateral,
+    el("div", { class: "principal" }, [el("div", { class: "wrap" }, [conteudo])])
   ]));
   mostrarAba(conteudo, atual);
 }
