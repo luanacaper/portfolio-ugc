@@ -614,11 +614,14 @@ async function mostrarMetricas(raiz) {
   const colOrigem = el("div", {});
   const colVideos = el("div", {});
   const colConversao = el("div", {});
+  const colProfundidade = el("div", {});
+  const colCliques = el("div", {});
   raiz.append(
     el("div", { class: "barra" }, [el("p", { text: aba.dica }), periodo]),
     aviso,
     cartoes,
     colConversao,
+    el("div", { class: "metricas-grade" }, [colProfundidade, colCliques]),
     el("div", { class: "metricas-grade" }, [colOrigem, colVideos])
   );
 
@@ -644,6 +647,17 @@ async function mostrarMetricas(raiz) {
     ]);
   }
 
+  function tabelaFunil(marcos, base) {
+    return el("table", {}, [
+      el("thead", {}, [el("tr", {}, ["Rolou até", "Pessoas", "%"].map(t => el("th", { text: t })))]),
+      el("tbody", {}, marcos.map(([m, n]) => el("tr", {}, [
+        el("td", { text: m + "%" }),
+        el("td", { text: String(n) }),
+        el("td", { text: base ? Math.round(n / base * 100) + "%" : "—" })
+      ])))
+    ]);
+  }
+
   function tabelaConversao(linhas) {
     if (!linhas.length) return el("p", { class: "vazio", text: "Sem dados nesse período." });
     return el("table", {}, [
@@ -658,12 +672,12 @@ async function mostrarMetricas(raiz) {
   }
 
   async function carregar() {
-    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao);
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao); limpar(colProfundidade); limpar(colCliques);
     cartoes.append(el("div", { class: "vazio", text: "Carregando..." }));
     try {
       const dias = Number(periodo.value);
       const desde = dias ? "&created_at=gte." + new Date(Date.now() - dias * 86400000).toISOString() : "";
-      let filtro = "tipo=in.(visita,video)&select=tipo,origem,detalhe,sessao,created_at&order=created_at.desc&limit=5000" + desde;
+      let filtro = "tipo=in.(visita,video,clique,profundidade,ping)&select=tipo,origem,detalhe,sessao,created_at&order=created_at.desc&limit=10000" + desde;
       const [metricas, leads] = await Promise.all([
         rest(aba.tabela + "?" + filtro),
         rest("marcas?select=canal,created_at&order=created_at.desc&limit=5000" + desde).catch(() => [])
@@ -677,16 +691,27 @@ async function mostrarMetricas(raiz) {
   }
 
   function desenhar(linhas, leads) {
-    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao);
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao); limpar(colProfundidade); limpar(colCliques);
     const visitas = linhas.filter(l => l.tipo === "visita");
     const videos = linhas.filter(l => l.tipo === "video");
+    const cliques = linhas.filter(l => l.tipo === "clique");
+    const profundidade = linhas.filter(l => l.tipo === "profundidade");
+    const pings = linhas.filter(l => l.tipo === "ping");
     const pessoas = new Set(linhas.map(l => l.sessao)).size;
+
+    const porSessaoPing = new Map();
+    pings.forEach(l => { const v = Number(l.detalhe) || 0; porSessaoPing.set(l.sessao, Math.max(porSessaoPing.get(l.sessao) || 0, v)); });
+    const temposSessao = [...porSessaoPing.values()];
+    const tempoMedio = temposSessao.length ? Math.round(temposSessao.reduce((a, b) => a + b, 0) / temposSessao.length) : 0;
+
     cartoes.append(
       cartaoNumero(visitas.length, "Visitas"),
       cartaoNumero(pessoas, "Pessoas (aprox.)"),
       cartaoNumero(videos.length, "Vídeos abertos"),
-      cartaoNumero(leads.length, "Leads gerados")
+      cartaoNumero(leads.length, "Leads gerados"),
+      cartaoNumero(tempoMedio ? Math.round(tempoMedio / 60 * 10) / 10 + " min" : "—", "Tempo médio na página")
     );
+
     const porOrigem = new Map(contagem(visitas, l => l.origem || "Direto"));
     const porCanal = new Map(contagem(leads, l => l.canal || "Direto"));
     const canais = [...new Set([...porOrigem.keys(), ...porCanal.keys()])]
@@ -696,6 +721,18 @@ async function mostrarMetricas(raiz) {
       el("h3", { text: "Conversão por canal" }),
       el("p", { class: "dica", text: "Quantas visitas de cada canal viraram lead (formulário ou WhatsApp). É o dado pra decidir onde focar." }),
       tabelaConversao(canais)
+    );
+
+    const marcosProf = [25, 50, 75, 100].map(m => [m, new Set(profundidade.filter(l => l.detalhe === String(m)).map(l => l.sessao)).size]);
+    colProfundidade.append(
+      el("h3", { text: "Até onde rolam a página" }),
+      el("p", { class: "dica", text: "Quantas pessoas chegaram em cada ponto da página. Se muita gente some antes de 100%, o conteúdo até ali não está segurando." }),
+      tabelaFunil(marcosProf, pessoas)
+    );
+    colCliques.append(
+      el("h3", { text: "Onde mais clicam" }),
+      el("p", { class: "dica", text: "Botões de ação (CTA, WhatsApp, formulário, categorias) — o que as pessoas realmente tocam." }),
+      tabelaContagem(contagem(cliques, l => l.detalhe || "—"), "Clique", cliques.length)
     );
     colOrigem.append(el("h3", { text: "De onde vieram" }), tabelaContagem(contagem(visitas, l => l.origem || "Direto"), "Origem", visitas.length));
     colVideos.append(el("h3", { text: "O que mais olharam" }), tabelaContagem(contagem(videos, l => l.detalhe || "Sem título"), "Vídeo", videos.length));

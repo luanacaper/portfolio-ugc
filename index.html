@@ -546,7 +546,7 @@ body.trava{overflow:hidden}
       <h1 class="revelar" style="--d:.05s" data-nome>Luana Caper</h1>
       <p class="lead revelar" style="--d:.1s">Vídeos de viagem que indicam sua pousada como uma <em class="serif">amiga</em> indicaria: de verdade, sem cara de anúncio.</p>
       <div class="acoes revelar" style="--d:.15s">
-        <a class="btn btn-primario" href="#contato">Falar comigo</a>
+        <a class="btn btn-primario" href="#contato" data-rastreio="hero-cta">Falar comigo</a>
         <a class="btn btn-contorno" href="#trabalhos">Ver os vídeos</a>
       </div>
       <div class="numeros-capa" id="numerosCapa" role="list" aria-label="Números principais"></div>
@@ -731,7 +731,7 @@ body.trava{overflow:hidden}
             <label for="c-msg">Mensagem</label>
             <textarea id="c-msg" name="mensagem" required></textarea>
           </div>
-          <button class="btn btn-primario btn-bloco" type="submit">Enviar mensagem</button>
+          <button class="btn btn-primario btn-bloco" type="submit" data-rastreio="contato-enviar">Enviar mensagem</button>
         </form>
         <div class="conf" id="confContato" tabindex="-1" hidden></div>
       </div>
@@ -795,7 +795,7 @@ body.trava{overflow:hidden}
           <label class="sr" for="k-tel">Seu telefone (opcional)</label>
           <input id="k-tel" name="telefone" type="tel" placeholder="Telefone (opcional)" autocomplete="tel">
         </div>
-        <button class="btn btn-primario btn-bloco" type="submit">Quero receber</button>
+        <button class="btn btn-primario btn-bloco" type="submit" data-rastreio="ideias-enviar">Quero receber</button>
         <p class="cap-nota">Sem spam, prometo. Só conteúdo relevante.</p>
       </form>
     </div>
@@ -1387,6 +1387,44 @@ async function enviar(dados) {
   };
   registrarMetrica("visita");
 })();
+
+/* Engajamento: clique nos pontos-chave de conversão, até onde a pessoa rola a página,
+   e quanto tempo ela fica (enquanto a aba está visível). Tudo pela mesma tabela "metricas". */
+(function () {
+  if (!window.registrarMetrica) return;
+
+  document.addEventListener("click", e => {
+    const alvo = e.target.closest("[data-rastreio]");
+    if (alvo) registrarMetrica("clique", alvo.dataset.rastreio);
+  });
+
+  const marcos = [25, 50, 75, 100];
+  const vistos = new Set();
+  function checarProfundidade() {
+    const alt = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = alt > 0 ? Math.min(100, Math.round((window.scrollY / alt) * 100)) : 100;
+    marcos.forEach(m => {
+      if (pct >= m && !vistos.has(m)) { vistos.add(m); registrarMetrica("profundidade", String(m)); }
+    });
+    if (vistos.size === marcos.length) window.removeEventListener("scroll", aoRolar);
+  }
+  let tProfundidade = null;
+  function aoRolar() {
+    clearTimeout(tProfundidade);
+    tProfundidade = setTimeout(checarProfundidade, 300);
+  }
+  window.addEventListener("scroll", aoRolar, { passive: true });
+  checarProfundidade();
+
+  let pings = 0;
+  const MAX_PINGS = 40; // ~20 minutos (30s cada) — evita ping infinito em aba esquecida aberta
+  const intervaloPing = setInterval(() => {
+    if (document.visibilityState !== "visible") return;
+    pings++;
+    registrarMetrica("ping", String(pings * 30));
+    if (pings >= MAX_PINGS) clearInterval(intervaloPing);
+  }, 30000);
+})();
 function mostrarConfirmacao(caixa, enviado, nome, assunto, texto) {
   caixa.replaceChildren();
   if (enviado) {
@@ -1396,7 +1434,7 @@ function mostrarConfirmacao(caixa, enviado, nome, assunto, texto) {
       el("h3", { text: "Quase lá, " + nome + "!" }),
       el("p", { text: "Escolha por onde quer enviar. A mensagem já vai pronta." }),
       el("div", { class: "acoes" }, [
-        el("a", { class: "btn btn-primario", href: wa(texto), target: "_blank", rel: "noopener noreferrer", text: "Enviar por WhatsApp" }),
+        el("a", { class: "btn btn-primario", href: wa(texto), target: "_blank", rel: "noopener noreferrer", "data-rastreio": "whatsapp-abrir", text: "Enviar por WhatsApp" }),
         el("a", { class: "btn btn-contorno", href: mail(assunto, texto), text: "Enviar por e-mail" })
       ])
     );
