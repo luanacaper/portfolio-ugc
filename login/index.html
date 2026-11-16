@@ -234,7 +234,7 @@ const ABAS = {
     dica: "Toda marca da base. Quem preenche o formulário do site entra com origem \"Portfólio\"; as que o Claude pesquisou no Chrome entram como \"Abordagem via Claude Chrome\". A abordagem em si anda na aba CRM.",
     campos: [
       { k: "nome", r: "Marca", t: "text", obrig: true },
-      { k: "origem", r: "Origem (de onde a marca entrou na base)", t: "select", opcoes: ORIGENS, rotulos: ROTULO_ORIGEM },
+      { k: "origem_base", r: "Origem (de onde a marca entrou na base)", t: "select", opcoes: ORIGENS, rotulos: ROTULO_ORIGEM },
       { k: "instagram", r: "Instagram", t: "text", dica: "Sem @, ex: pousadaexemplo" },
       { k: "email", r: "E-mail", t: "text", dica: "Pode ter mais de um, separado por |" },
       { k: "telefone", r: "Telefone ou WhatsApp", t: "text" },
@@ -640,7 +640,7 @@ async function mostrarMarcas(raiz) {
     const origem = filtroOrigem.value;
     return linhas.filter(l => {
       if (status && l.status !== status) return false;
-      if (origem && (l.origem || "portfolio") !== origem) return false;
+      if (origem && (l.origem_base || "portfolio") !== origem) return false;
       if (!termo) return true;
       return [l.nome, l.canal, l.instagram, l.email, l.telefone, l.observacoes, l.categoria].some(v => String(v || "").toLowerCase().includes(termo));
     });
@@ -668,7 +668,7 @@ async function mostrarMarcas(raiz) {
       l.categoria ? el("small", { class: "sub-celula", text: l.categoria }) : null,
       links.length ? el("div", { class: "mini-links" }, links) : null
     ]);
-    const origem = l.origem || "portfolio";
+    const origem = l.origem_base || "portfolio";
     const ed = el("button", { class: "btn contorno mini", type: "button", text: "Editar" });
     ed.addEventListener("click", () => abrirFormulario(aba, l, salvar, linhas));
     const paraCrm = el("button", { class: "btn contorno mini", type: "button", text: "→ CRM", title: "Criar um card dessa marca no pipeline" });
@@ -680,7 +680,7 @@ async function mostrarMarcas(raiz) {
     ex.addEventListener("click", () => excluir(l));
     return el("tr", {}, [
       celMarca,
-      el("td", {}, [el("span", { class: "selo origem-" + origem, text: ROTULO_ORIGEM_CURTO[origem] || origem })]),
+      el("td", {}, [el("span", { class: "selo origem-" + origem, text: ROTULO_ORIGEM_CURTO[origem] || origem }), l.origem ? el("small", { class: "sub-celula", text: "formulário: " + l.origem }) : null]),
       el("td", { text: l.canal || "—" }),
       el("td", {}, [celInstagram]),
       el("td", {}, [celEmail]),
@@ -703,7 +703,7 @@ async function mostrarMarcas(raiz) {
   function paraCSV() {
     const cab = ["Marca", "Origem", "Categoria", "Canal", "Instagram", "Seguidores", "E-mail", "Telefone", "Situação", "Site", "Biblioteca de anúncios", "TikTok", "LinkedIn", "Observação", "Último contato"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
-    const corpoCSV = filtradas().map(l => [l.nome, ROTULO_ORIGEM[l.origem || "portfolio"], l.categoria, l.canal, l.instagram, l.seguidores, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.site, l.biblioteca_anuncios, l.tiktok, l.linkedin, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
+    const corpoCSV = filtradas().map(l => [l.nome, ROTULO_ORIGEM[l.origem_base || "portfolio"], l.categoria, l.canal, l.instagram, l.seguidores, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.site, l.biblioteca_anuncios, l.tiktok, l.linkedin, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
     return "﻿" + [cab.map(esc).join(","), ...corpoCSV].join("\r\n");
   }
 
@@ -1112,7 +1112,7 @@ function abrirFormulario(aba, linha, salvar, linhas, inicial) {
     if (c.k === "publicado" && !linha) valor = true;
     if (c.k === "status" && !linha) valor = aba.tabela === "marcas" ? "novo" : (c.opcoes && c.opcoes[0]);
     if (c.k === "tipo" && !linha) valor = c.opcoes[0];
-    if (c.k === "origem" && !linha) valor = "manual";
+    if ((c.k === "origem" || c.k === "origem_base") && !linha) valor = "manual";
     if (c.k === "prioridade" && !linha) valor = "media";
     if (!linha && inicial && inicial[c.k] != null) valor = inicial[c.k];
     if (c.t === "textarea") entrada = el("textarea", { id, required: c.obrig });
