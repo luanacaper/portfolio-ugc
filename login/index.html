@@ -262,7 +262,11 @@ const ABAS = {
     campos: [
       { k: "nome", r: "Nome (só pra você identificar)", t: "text", obrig: true, dica: "Ex.: Inscrição no diretório XPTO" },
       { k: "site", r: "Qual portfólio", t: "select", opcoes: Object.keys(SITES_UTM), rotulos: ROTULO_SITE_UTM },
-      { k: "fonte", r: "Nome da origem (utm_source)", t: "text", obrig: true, dica: "Sem espaço/acento, ex.: linktree, diretorio-xpto. É esse nome que vai aparecer nas Métricas." }
+      { k: "fonte", r: "Origem · utm_source", t: "text", obrig: true, dica: "De onde vem o tráfego. Sem espaço/acento. Ex.: instagram, laradam-ugc, newsletter. Esse é o que aparece em Métricas → De onde vieram." },
+      { k: "meio", r: "Meio · utm_medium", t: "text", dica: "Que TIPO de canal é. Ex.: social, email, bio, parceria, organico, pago. Opcional." },
+      { k: "campanha", r: "Campanha · utm_campaign", t: "text", dica: "Nome da ação específica que gerou o link. Ex.: lancamento-novembro, black-friday-2026. Opcional." },
+      { k: "conteudo", r: "Conteúdo · utm_content", t: "text", dica: "Qual peça ou botão especificamente — útil quando o mesmo link aparece em 2 lugares diferentes. Ex.: botao-topo, story-1, link-bio. Opcional." },
+      { k: "termo", r: "Termo · utm_term", t: "text", dica: "Palavra-chave — só faz sentido em anúncio de busca paga (Google Ads). Pode deixar em branco na maioria das vezes." }
     ]
   }
 };
@@ -744,7 +748,13 @@ async function mostrarMetricas(raiz) {
 
 function linkUtm(l) {
   const base = SITES_UTM[l.site] || SITES_UTM.geral;
-  return base + "?utm_source=" + encodeURIComponent(l.fonte || "");
+  const p = new URLSearchParams();
+  p.set("utm_source", l.fonte || "");
+  if (l.meio) p.set("utm_medium", l.meio);
+  if (l.campanha) p.set("utm_campaign", l.campanha);
+  if (l.conteudo) p.set("utm_content", l.conteudo);
+  if (l.termo) p.set("utm_term", l.termo);
+  return base + "?" + p.toString();
 }
 
 function cartaoDe(chave, l, acoes) {
@@ -774,7 +784,7 @@ function cartaoDe(chave, l, acoes) {
     sub = [l.tipo, l.marca].filter(Boolean).join(" · ");
   } else if (chave === "links_utm") {
     titulo = l.nome;
-    sub = ROTULO_SITE_UTM[l.site] || l.site;
+    sub = [ROTULO_SITE_UTM[l.site] || l.site, l.fonte, l.meio, l.campanha].filter(Boolean).join(" · ");
     extra.push(el("div", { class: "item-msg", text: linkUtm(l) }));
   } else {
     titulo = l.nome;
