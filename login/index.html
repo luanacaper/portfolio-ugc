@@ -139,6 +139,35 @@ table.planilha td b{display:block}
 .card-crm-prox.atrasado small{color:var(--erro)}
 .card-crm-data{color:var(--suave);font-size:.76rem}
 .card-crm .item-acoes select{max-width:120px}
+.cadencia{border:1px dashed #cfd3bd;border-radius:10px;padding:6px 8px;display:grid;gap:6px}
+.cadencia-topo{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.cadencia-topo small{color:var(--suave);font-size:.74rem;font-weight:700}
+.bolinhas{display:flex;gap:4px}
+.bolinha{width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #cfd3bd}
+.bolinha.feito{background:var(--verde);border-color:var(--verde)}
+.bolinha.atual{background:var(--laranja);border-color:var(--laranja)}
+.bolinha.pula{background:repeating-linear-gradient(45deg,#e6e6da 0 2px,#fff 2px 4px);border-color:#e6e6da}
+.programa-aviso{background:#fff7e6;border:1px solid #f1d9a6;border-radius:10px;padding:6px 8px;display:grid;gap:6px}
+.programa-aviso small{color:#7a5410;font-weight:700;font-size:.76rem}
+.agenda-hoje{background:#fff;border:1px solid var(--linha);border-radius:18px;padding:12px 14px;margin-bottom:14px}
+.agenda-hoje summary{font-weight:800;cursor:pointer}
+.agenda-lista{display:grid;gap:8px;margin-top:10px}
+.agenda-item{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;border:1px solid var(--linha);border-left:4px solid var(--laranja);border-radius:12px;padding:8px 12px}
+.agenda-item.atrasado{border-left-color:var(--erro);background:#fdf6f5}
+.agenda-txt{display:grid;gap:1px;min-width:0;flex:1}
+.agenda-txt span{font-size:.88rem}
+.agenda-txt small{color:var(--suave);font-size:.76rem}
+.compositor{border-top:1px solid var(--linha);padding-top:6px;display:grid;gap:6px}
+.compositor[open]{gap:6px}
+.compositor summary{cursor:pointer;font-weight:700;font-size:.8rem;color:var(--verde-esc)}
+.compositor > *:not(summary){margin-top:6px}
+.compositor textarea,.compositor input,.compositor select{width:100%;padding:8px 10px;border:1.5px solid #d7dac8;border-radius:10px;background:var(--gelo);font-size:.84rem}
+.compositor textarea{resize:vertical;min-height:110px}
+.compositor textarea:focus,.compositor input:focus{outline:none;border-color:var(--verde);background:#fff}
+.msg-rodape{display:flex;justify-content:space-between;gap:8px;font-size:.74rem;color:var(--suave)}
+.msg-contador.estourou{color:var(--erro);font-weight:800}
+.msg-status{font-style:italic}
+.agenda-txt .compositor{max-width:640px}
 
 /* Métricas do portfólio */
 .metricas-cartoes{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px}
@@ -217,6 +246,26 @@ const PRIORIDADES = ["alta", "media", "baixa"];
 const ROTULO_PRIORIDADE = { alta: "Alta", media: "Média", baixa: "Baixa" };
 const CANAIS_ABORDAGEM = ["LinkedIn", "E-mail", "DM Instagram", "WhatsApp", "Formulário da marca", "TikTok", "Outro"];
 
+/* Cadência do primeiro contato (enquanto a marca está em "A enviar" ou "Enviado").
+   LinkedIn primeiro (decisor pelo nome), Instagram como reforço, e-mail como último recurso.
+   WhatsApp nunca abre conversa: só depois que o decisor passar o número.
+   "espera" = dias até o próximo passo depois que este for feito. */
+const CADENCIA = [
+  null,
+  { canal: "LinkedIn", acao: "Pedir conexão no LinkedIn com nota curta + seguir a marca no Instagram", espera: 2, linkedin: true },
+  { canal: "DM Instagram", acao: "DM no Instagram da marca com 1 vídeo seu do mesmo nicho", acaoSemDecisor: "DM no Instagram da marca perguntando quem cuida de creators + 1 vídeo seu", espera: 4 },
+  { canal: "LinkedIn", acao: "Follow-up no LinkedIn com o link do portfólio", espera: 3, linkedin: true },
+  { canal: "E-mail", acao: "E-mail pedindo que encaminhem ao time de marketing", espera: 7 },
+  { canal: "Outro", acao: "Sem resposta: mover para Perdido ou pausar 30 dias e tentar de novo", espera: 0 }
+];
+const ULTIMO_PASSO = CADENCIA.length - 1;
+/* O que fazer automaticamente quando o card muda de etapa na mão */
+const PASSO_DA_ETAPA = {
+  respondeu: { texto: "Responder em até 24h: portfólio + ideia de vídeo pra marca", dias: 1 },
+  proposta: { texto: "Cobrar retorno da proposta", dias: 3 },
+  fechado: { texto: "Combinar briefing, prazo e data de entrega", dias: 1 }
+};
+
 const ABAS = {
   videos: {
     rotulo: "Vídeos", tabela: "videos", ordem: "ordem.asc,created_at.asc", novo: "Novo vídeo",
@@ -271,6 +320,10 @@ const ABAS = {
       { k: "data_proximo_passo", r: "Data do próximo passo", t: "date" },
       { k: "valor", r: "Valor da proposta (R$)", t: "number" },
       { k: "origem", r: "Origem", t: "select", opcoes: ORIGENS, rotulos: ROTULO_ORIGEM },
+      { k: "passo_cadencia", r: "Passo da cadência (1 a 5)", t: "number", dica: "1 LinkedIn · 2 DM Instagram · 3 follow-up LinkedIn · 4 e-mail · 5 decidir. O botão \"✓ Feito\" do card avança sozinho." },
+      { k: "programa_link", r: "Programa / formulário de creators da marca", t: "text", dica: "Se a marca tem inscrição aberta pra creators, cole o link: aparece um lembrete no card até você marcar como inscrita." },
+      { k: "programa_inscrito", r: "Já me inscrevi no programa", t: "check" },
+      { k: "historico", r: "Histórico de toques", t: "textarea", dica: "Preenchido sozinho pelo \"✓ Feito\". Pode escrever à mão também (uma linha por toque)." },
       { k: "observacoes", r: "Observações", t: "textarea" }
     ]
   },
@@ -734,24 +787,67 @@ async function mostrarCRM(raiz) {
   const fPri = el("select", { "aria-label": "Filtrar por prioridade" }, [el("option", { value: "", text: "Todas as prioridades" }), ...PRIORIDADES.map(p => el("option", { value: p, text: ROTULO_PRIORIDADE[p] }))]);
   const csv = el("button", { class: "btn contorno mini", type: "button", text: "Baixar CSV" });
   const resumo = el("div", { class: "metricas-cartoes" });
+  const agenda = el("details", { class: "agenda-hoje", open: true });
   const quadro = el("div", { class: "kanban", role: "list" });
   raiz.append(
     el("div", { class: "barra" }, [el("p", { text: aba.dica }), novo]),
     aviso,
     el("div", { class: "planilha-ferramentas" }, [busca, fResp, fCamp, fPri, csv]),
     resumo,
+    agenda,
     quadro
   );
 
   const falar = (texto, tipo) => { aviso.hidden = false; aviso.className = "aviso " + (tipo || "ok"); aviso.textContent = texto; };
   let linhas = [], marcas = {};
-  const hoje = () => new Date().toISOString().slice(0, 10);
+  /* datas no fuso local (toISOString viraria o dia às 21h) */
+  const isoLocal = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const hoje = () => isoLocal(new Date());
+  const somaDias = n => { const d = new Date(); d.setDate(d.getDate() + n); return isoLocal(d); };
+
+  /* ---- cadência ---- */
+  const temDecisor = l => !!(l.contato_linkedin && /linkedin\.com/i.test(l.contato_linkedin));
+  const valePasso = (l, i) => i >= 1 && i <= ULTIMO_PASSO && (!CADENCIA[i].linkedin || temDecisor(l));
+  const proximoValido = (l, depoisDe) => { for (let i = depoisDe + 1; i <= ULTIMO_PASSO; i++) if (valePasso(l, i)) return i; return ULTIMO_PASSO; };
+  const passoAtual = l => { const n = l.passo_cadencia || 1; return valePasso(l, n) ? n : proximoValido(l, n - 1); };
+  const textoPasso = (l, i) => (i === 2 && !temDecisor(l) && CADENCIA[2].acaoSemDecisor) || CADENCIA[i].acao;
+  const emCadencia = l => ["a_enviar", "enviado"].includes(l.etapa || "a_enviar") && (l.passo_cadencia || 1) <= ULTIMO_PASSO;
+  const anotar = (l, texto) => (dataBR(hoje()) + " · " + texto + (l.historico ? "\n" + l.historico : "")).slice(0, 8000);
+
+  async function concluirPasso(l) {
+    const n = passoAtual(l);
+    const dados = { historico: anotar(l, CADENCIA[n].canal + " · " + textoPasso(l, n)) };
+    const m = proximoValido(l, n);
+    dados.passo_cadencia = m;
+    dados.proximo_passo = textoPasso(l, m);
+    dados.canal_abordagem = CADENCIA[m].canal === "Outro" ? l.canal_abordagem : CADENCIA[m].canal;
+    dados.data_proximo_passo = somaDias(CADENCIA[n].espera);
+    if ((l.etapa || "a_enviar") === "a_enviar") { dados.etapa = "enviado"; if (!l.data_envio) dados.data_envio = hoje(); }
+    if (await salvar(l.id, dados)) falar(l.marca + ": passo " + n + " feito. Próximo em " + dataBR(dados.data_proximo_passo) + ".", "ok");
+  }
+  async function pausar(l) {
+    const p = proximoValido(l, 0);
+    await salvar(l.id, { passo_cadencia: p, proximo_passo: "Recomeçar a cadência: " + textoPasso(l, p), canal_abordagem: CADENCIA[p].canal, data_proximo_passo: somaDias(30), historico: anotar(l, "Sem resposta na cadência, pausado por 30 dias") });
+  }
+  async function marcarPerdido(l) {
+    await salvar(l.id, { etapa: "perdido", proximo_passo: null, data_proximo_passo: null, historico: anotar(l, "Marcado como Perdido") });
+  }
+  async function mudarEtapa(l, etapa) {
+    const dados = { etapa, historico: anotar(l, "Etapa: " + (ROTULO_ETAPA[l.etapa] || l.etapa) + " → " + ROTULO_ETAPA[etapa]) };
+    const auto = PASSO_DA_ETAPA[etapa];
+    if (auto) { dados.proximo_passo = auto.texto; dados.data_proximo_passo = somaDias(auto.dias); }
+    if (etapa === "perdido") { dados.proximo_passo = null; dados.data_proximo_passo = null; }
+    await salvar(l.id, dados);
+  }
+  async function marcarInscrita(l) {
+    await salvar(l.id, { programa_inscrito: true, historico: anotar(l, "Inscrição feita no programa de creators da marca") });
+  }
 
   async function carregar() {
     try {
       const [c, m] = await Promise.all([
         rest("crm?select=*&order=" + aba.ordem),
-        rest("marcas?select=nome,instagram,biblioteca_anuncios,site").catch(() => [])
+        rest("marcas?select=nome,instagram,email,biblioteca_anuncios,site").catch(() => [])
       ]);
       linhas = c || [];
       marcas = {};
@@ -806,7 +902,7 @@ async function mostrarCRM(raiz) {
     const m = marcas[(l.marca || "").toLowerCase()] || {};
     const atrasado = l.data_proximo_passo && l.data_proximo_passo < hoje() && !["fechado", "perdido"].includes(l.etapa);
     const sel = el("select", { "aria-label": "Mover " + l.marca + " para" }, ETAPAS_CRM.map(e => el("option", { value: e, text: ROTULO_ETAPA[e], selected: e === l.etapa })));
-    sel.addEventListener("change", () => salvar(l.id, { etapa: sel.value }));
+    sel.addEventListener("change", () => mudarEtapa(l, sel.value));
     const ed = el("button", { class: "btn contorno mini", type: "button", text: "Editar" });
     ed.addEventListener("click", () => abrirFormulario(aba, l, salvar, linhas));
     const ex = el("button", { class: "btn perigo mini", type: "button", text: "Excluir" });
@@ -835,11 +931,184 @@ async function mostrarCRM(raiz) {
         el("small", { text: (atrasado ? "Atrasado · " : "Próximo passo") + (l.data_proximo_passo ? " · " + dataBR(l.data_proximo_passo) : "") }),
         l.proximo_passo ? el("span", { text: l.proximo_passo }) : null
       ]) : null,
+      emCadencia(l) ? blocoCadencia(l) : compositor(l, "livre", false),
+      l.programa_link && !l.programa_inscrito ? blocoPrograma(l) : null,
       l.data_envio ? el("small", { class: "card-crm-data", text: "Enviado em " + dataBR(l.data_envio) }) : null,
+      l.historico ? el("small", { class: "card-crm-data", title: l.historico, text: "Último toque: " + l.historico.split("\n")[0] }) : null,
       l.valor ? el("small", { class: "card-crm-data", text: "Proposta: " + Number(l.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) }) : null,
       links.length ? el("div", { class: "mini-links" }, links) : null,
       el("div", { class: "item-acoes" }, [sel, ed, ex])
     ]);
+  }
+
+  /* Bolinhas da cadência + botão que registra o toque e agenda o próximo */
+  function blocoCadencia(l) {
+    const n = passoAtual(l);
+    const bolinhas = [];
+    for (let i = 1; i <= ULTIMO_PASSO; i++) {
+      const estado = !valePasso(l, i) ? "pula" : i < n ? "feito" : i === n ? "atual" : "";
+      bolinhas.push(el("span", { class: "bolinha " + estado, title: i + ". " + CADENCIA[i].canal + (estado === "pula" ? " (sem decisor no LinkedIn)" : "") }));
+    }
+    const botoes = [];
+    if (n < ULTIMO_PASSO) {
+      const feito = el("button", { class: "btn mini", type: "button", text: "✓ Feito" , title: "Registra este toque e agenda o próximo" });
+      feito.addEventListener("click", () => { feito.disabled = true; concluirPasso(l); });
+      botoes.push(feito);
+    } else {
+      const perdido = el("button", { class: "btn perigo mini", type: "button", text: "Perdido" });
+      perdido.addEventListener("click", () => marcarPerdido(l));
+      const pausa = el("button", { class: "btn contorno mini", type: "button", text: "Pausar 30 dias" });
+      pausa.addEventListener("click", () => pausar(l));
+      botoes.push(pausa, perdido);
+    }
+    return el("div", { class: "cadencia" }, [
+      el("div", { class: "cadencia-topo" }, [el("div", { class: "bolinhas", "aria-label": "Passo " + n + " de " + ULTIMO_PASSO }, bolinhas), el("small", { text: "Passo " + n + " de " + ULTIMO_PASSO + " · " + CADENCIA[n].canal })]),
+      CANAL_DO_PASSO["p" + n] ? compositor(l, "p" + n, false) : null,
+      el("div", { class: "item-acoes" }, botoes)
+    ]);
+  }
+
+  /* ---- mensagens de abordagem: escrever, salvar e abrir o canal certo ---- */
+  const primeiroNome = l => String(l.contato_nome || "").trim().split(/\s+/)[0] || "";
+  const slug = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const linkPortfolio = (l, fonte) => SITES_UTM.geral + "?utm_source=" + fonte + "&utm_medium=abordagem" + (l.campanha ? "&utm_campaign=" + slug(l.campanha) : "") + "&utm_content=" + slug(l.marca);
+  const CANAL_DO_PASSO = { p1: "LinkedIn", p2: "DM Instagram", p3: "LinkedIn", p4: "E-mail" };
+  const LIMITE = { p1: 300 };
+  function modelo(l, chave, canal) {
+    const nome = primeiroNome(l), marca = l.marca;
+    const oi = nome ? "Oi " + nome + ", tudo bem?" : "Oi, time " + marca + "! Tudo bem?";
+    if (chave === "p1") return oi + " Sou a Luana, creator de UGC tech. Vi os anúncios da " + marca + " rodando e tenho umas ideias de vídeo pra vocês. Bora conectar?";
+    if (chave === "p2") return "Oi, time " + marca + "! Sou a Luana, faço vídeos UGC de apps e tecnologia. Testo app de verdade na minha rotina de mãe e home office e queria criar vídeos pros anúncios de vocês. Meu portfólio: " + linkPortfolio(l, "instagram") + "\n\n" + (temDecisor(l) ? "Posso mandar uma ideia de roteiro?" : "Quem cuida de creators e influência aí?");
+    if (chave === "p3") return (nome ? nome + ", passando" : "Passando") + " pra deixar meu portfólio de UGC: " + linkPortfolio(l, "linkedin") + "\n\nSeparei uma ideia de vídeo pra " + marca + ". Te mando por aqui se fizer sentido?";
+    if (chave === "p4") return "Olá! Sou a Luana Caper, creator de UGC tech.\n\nVi os anúncios da " + marca + " na Biblioteca da Meta e tenho ideias de vídeo pra eles. Vocês podem encaminhar este e-mail pra pessoa de marketing ou de influência?\n\nPortfólio: " + linkPortfolio(l, "email") + "\n\nObrigada!\nLuana Caper";
+    if (canal === "E-mail") return "Olá" + (nome ? " " + nome : "") + "!\n\n\n\nPortfólio: " + linkPortfolio(l, "email") + "\n\nLuana Caper";
+    if (canal === "WhatsApp") return (nome ? "Oi " + nome + "! " : "Oi! ") + "Aqui é a Luana Caper, creator de UGC.";
+    return oi + " ";
+  }
+  const assuntoPadrao = l => "Vídeos UGC pra " + l.marca;
+  async function guardarMensagem(l, chave, valor) {
+    const msgs = Object.assign({}, l.mensagens || {});
+    if (valor == null || valor === "") delete msgs[chave]; else msgs[chave] = valor;
+    l.mensagens = msgs;
+    try { await rest(aba.tabela + "?id=eq." + l.id, { metodo: "PATCH", corpo: { mensagens: msgs }, retorno: "minimal" }); }
+    catch (e) { tratarErro(e); }
+  }
+  function destinoDoCanal(l, canal) {
+    const m = marcas[(l.marca || "").toLowerCase()] || {};
+    if (canal === "LinkedIn") return /^https?:/.test(l.contato_linkedin || "") ? l.contato_linkedin : null;
+    if (canal === "DM Instagram") { const h = String(m.instagram || "").replace(/^@/, ""); return h ? "https://ig.me/m/" + h : null; }
+    if (canal === "E-mail") return l.contato_email || String(m.email || "").split("|")[0].trim() || null;
+    if (canal === "WhatsApp") { const z = String(l.contato_whatsapp || "").replace(/\D/g, ""); return z.length >= 10 ? (z.length <= 11 ? "55" : "") + z : null; }
+    return null;
+  }
+  /* Campo de texto + botão que abre o canal. chave: p1..p4 (passos da cadência) ou "livre" */
+  function compositor(l, chave, aberto) {
+    let canal = CANAL_DO_PASSO[chave] || l.canal_abordagem || "LinkedIn";
+    const salvo = (l.mensagens || {})[chave];
+    const txt = el("textarea", { class: "msg-texto", rows: 5, "aria-label": "Mensagem para " + l.marca });
+    txt.value = typeof salvo === "object" && salvo ? (salvo.texto || "") : (salvo || modelo(l, chave, canal));
+    const assunto = el("input", { type: "text", class: "msg-assunto", "aria-label": "Assunto do e-mail", placeholder: "Assunto" });
+    assunto.value = (salvo && salvo.assunto) || assuntoPadrao(l);
+    const contador = el("small", { class: "msg-contador" });
+    const status = el("small", { class: "msg-status" });
+    const seletor = chave === "livre" ? el("select", { "aria-label": "Canal da mensagem" }, ["LinkedIn", "DM Instagram", "E-mail", "WhatsApp"].map(c => el("option", { value: c, text: c, selected: c === canal }))) : null;
+    const abrir = el("button", { class: "btn mini", type: "button" });
+    function atualizar() {
+      const lim = LIMITE[chave];
+      contador.textContent = txt.value.length + (lim ? " / " + lim + " (nota de conexão)" : " caracteres");
+      contador.classList.toggle("estourou", !!(lim && txt.value.length > lim));
+      assunto.hidden = canal !== "E-mail";
+      const dest = destinoDoCanal(l, canal);
+      abrir.disabled = !dest;
+      abrir.textContent = !dest ? "Sem " + canal + " cadastrado" : canal === "E-mail" ? "Abrir e-mail pronto" : canal === "WhatsApp" ? "Abrir WhatsApp pronto" : "Copiar e abrir " + (canal === "LinkedIn" ? "o LinkedIn" : "o direct");
+    }
+    let tempo;
+    const salvarDepois = () => {
+      clearTimeout(tempo);
+      status.textContent = "salvando...";
+      tempo = setTimeout(async () => {
+        await guardarMensagem(l, chave, canal === "E-mail" ? { texto: txt.value, assunto: assunto.value } : txt.value);
+        status.textContent = "rascunho salvo";
+      }, 700);
+    };
+    txt.addEventListener("input", () => { atualizar(); salvarDepois(); });
+    assunto.addEventListener("input", salvarDepois);
+    if (seletor) seletor.addEventListener("change", () => { canal = seletor.value; if (!salvo) txt.value = modelo(l, chave, canal); atualizar(); });
+    abrir.addEventListener("click", async () => {
+      const dest = destinoDoCanal(l, canal);
+      if (!dest) return;
+      const texto = txt.value;
+      if (canal === "E-mail") { window.open("mailto:" + dest + "?subject=" + encodeURIComponent(assunto.value) + "&body=" + encodeURIComponent(texto), "_blank"); status.textContent = "e-mail aberto com o texto"; return; }
+      if (canal === "WhatsApp") { window.open("https://wa.me/" + dest + "?text=" + encodeURIComponent(texto), "_blank", "noopener"); status.textContent = "WhatsApp aberto com o texto"; return; }
+      let copiou = true;
+      try { await navigator.clipboard.writeText(texto); } catch (e) { copiou = false; }
+      window.open(dest, "_blank", "noopener");
+      status.textContent = copiou ? "texto copiado: é só colar (Ctrl+V)" : "não consegui copiar: selecione o texto e copie";
+      if (!copiou) { txt.focus(); txt.select(); }
+    });
+    atualizar();
+    const restaurar = el("button", { class: "btn contorno mini", type: "button", text: "Usar modelo" , title: "Troca o texto pelo modelo padrão" });
+    restaurar.addEventListener("click", () => { txt.value = modelo(l, chave, canal); atualizar(); salvarDepois(); });
+    const rotulo = chave === "livre" ? "✍️ Escrever outra mensagem" : "✍️ Mensagem do passo " + chave.slice(1) + " · " + canal + (salvo ? " (rascunho salvo)" : "");
+    return el("details", { class: "compositor", open: !!aberto }, [
+      el("summary", { text: rotulo }),
+      seletor,
+      assunto,
+      txt,
+      el("div", { class: "msg-rodape" }, [contador, status]),
+      el("div", { class: "item-acoes" }, [abrir, restaurar])
+    ]);
+  }
+
+  function blocoPrograma(l) {
+    const ok = el("button", { class: "btn contorno mini", type: "button", text: "✓ Inscrita" });
+    ok.addEventListener("click", () => marcarInscrita(l));
+    return el("div", { class: "programa-aviso" }, [
+      el("small", { text: "A marca tem programa de creators aberto" }),
+      el("div", { class: "item-acoes" }, [el("a", { class: "btn mini", href: l.programa_link, target: "_blank", rel: "noopener noreferrer", text: "Inscrever" }), ok])
+    ]);
+  }
+
+  /* "Pra fazer hoje": tudo com próximo passo vencido ou pra hoje, mais inscrições pendentes */
+  function desenharAgenda(vis) {
+    const h = hoje();
+    const peso = { alta: 0, media: 1, baixa: 2 };
+    const tarefas = vis.filter(l => !["fechado", "perdido"].includes(l.etapa) && ((l.data_proximo_passo && l.data_proximo_passo <= h) || (l.programa_link && !l.programa_inscrito)))
+      .sort((a, b) => String(a.data_proximo_passo || h).localeCompare(String(b.data_proximo_passo || h)) || (peso[a.prioridade] ?? 1) - (peso[b.prioridade] ?? 1));
+    limpar(agenda).append(el("summary", { text: "Pra fazer hoje (" + tarefas.length + ")" }));
+    if (!tarefas.length) { agenda.append(el("p", { class: "coluna-vazia", text: "Nada pendente pra hoje com esse filtro." })); return; }
+    agenda.append(el("div", { class: "agenda-lista" }, tarefas.map(l => {
+      const atras = l.data_proximo_passo && l.data_proximo_passo < h;
+      const acoes = [];
+      if (l.contato_linkedin && /^https?:/.test(l.contato_linkedin)) acoes.push(el("a", { href: l.contato_linkedin, target: "_blank", rel: "noopener noreferrer", text: "LinkedIn" }));
+      const m = marcas[(l.marca || "").toLowerCase()] || {};
+      if (m.instagram) acoes.push(el("a", { href: "https://instagram.com/" + String(m.instagram).replace(/^@/, ""), target: "_blank", rel: "noopener noreferrer", text: "Instagram" }));
+      if (l.programa_link && !l.programa_inscrito) acoes.push(el("a", { href: l.programa_link, target: "_blank", rel: "noopener noreferrer", text: "Programa de creators" }));
+      const botoes = [];
+      if (emCadencia(l) && passoAtual(l) < ULTIMO_PASSO && l.data_proximo_passo && l.data_proximo_passo <= h) {
+        const b = el("button", { class: "btn mini", type: "button", text: "✓ Feito" });
+        b.addEventListener("click", () => { b.disabled = true; concluirPasso(l); });
+        botoes.push(b);
+      }
+      if (l.programa_link && !l.programa_inscrito) {
+        const b = el("button", { class: "btn contorno mini", type: "button", text: "✓ Inscrita" });
+        b.addEventListener("click", () => marcarInscrita(l));
+        botoes.push(b);
+      }
+      const ed = el("button", { class: "btn contorno mini", type: "button", text: "Abrir" });
+      ed.addEventListener("click", () => abrirFormulario(aba, l, salvar, linhas));
+      botoes.push(ed);
+      return el("div", { class: "agenda-item" + (atras ? " atrasado" : "") }, [
+        el("div", { class: "agenda-txt" }, [
+          el("b", { text: l.marca }),
+          el("span", { text: (l.proximo_passo || "Inscrever no programa de creators") }),
+          el("small", { text: [l.responsavel, l.contato_nome, atras ? "atrasado desde " + dataBR(l.data_proximo_passo) : (l.data_proximo_passo ? "hoje" : "")].filter(Boolean).join(" · ") }),
+          acoes.length ? el("div", { class: "mini-links" }, acoes) : null,
+          emCadencia(l) && CANAL_DO_PASSO["p" + passoAtual(l)] && l.data_proximo_passo && l.data_proximo_passo <= h ? compositor(l, "p" + passoAtual(l), true) : null
+        ]),
+        el("div", { class: "item-acoes" }, botoes)
+      ]);
+    })));
   }
 
   function redesenhar() {
@@ -849,6 +1118,7 @@ async function mostrarCRM(raiz) {
     const atrasados = ativos.filter(l => l.data_proximo_passo && l.data_proximo_passo < hoje());
     [["Marcas no pipeline", vis.length], ["Em andamento", ativos.length], ["Responderam", vis.filter(l => ["respondeu", "proposta", "fechado"].includes(l.etapa)).length], ["Fechadas", vis.filter(l => l.etapa === "fechado").length], ["Passo atrasado", atrasados.length]]
       .forEach(([r, n]) => resumo.append(el("div", { class: "metrica-cartao" }, [el("b", { text: String(n) }), el("span", { text: r })])));
+    desenharAgenda(vis);
     limpar(quadro);
     ETAPAS_CRM.forEach(e => {
       const peso = { alta: 0, media: 1, baixa: 2 };
@@ -861,8 +1131,8 @@ async function mostrarCRM(raiz) {
   }
 
   function paraCSV() {
-    const cols = ["marca", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "outros_contatos", "observacoes"];
-    const cab = ["Marca", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Outros contatos", "Observações"];
+    const cols = ["marca", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "passo_cadencia", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "programa_link", "programa_inscrito", "outros_contatos", "historico", "observacoes"];
+    const cab = ["Marca", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Passo da cadência", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Programa de creators", "Inscrita no programa", "Outros contatos", "Histórico", "Observações"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
     const fmt = (k, v) => k === "etapa" ? ROTULO_ETAPA[v] || v : k === "prioridade" ? ROTULO_PRIORIDADE[v] || v : k === "origem" ? ROTULO_ORIGEM[v] || v : /^data/.test(k) && v ? dataBR(v) : v;
     return "﻿" + [cab.map(esc).join(","), ...filtradas().map(l => cols.map(k => esc(fmt(k, l[k]))).join(","))].join("\r\n");
