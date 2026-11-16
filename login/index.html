@@ -41,7 +41,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .campo input,.campo select,.campo textarea{width:100%;padding:11px 14px;border:1.5px solid #d7dac8;border-radius:14px;background:var(--gelo)}
 .campo textarea{min-height:90px;resize:vertical}
 .campo input:focus,.campo select:focus,.campo textarea:focus{outline:none;border-color:var(--verde);background:#fff;box-shadow:0 0 0 4px rgba(85,97,59,.2)}
-.campo .dica{font-size:.78rem;color:var(--suave)}
+.dica{font-size:.78rem;color:var(--suave)}
 .campo.check{display:flex;align-items:center;gap:10px}
 .campo.check input{width:20px;height:20px;padding:0}
 .aviso{padding:10px 14px;border-radius:14px;font-size:.9rem;margin-bottom:12px}
@@ -474,7 +474,7 @@ async function mostrarMarcas(raiz) {
   const csv = el("button", { class: "btn contorno mini", type: "button", text: "Baixar CSV" });
   const corpo = el("tbody", {});
   const tabela = el("table", { class: "planilha" }, [
-    el("thead", {}, [el("tr", {}, ["Marca", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato", "Ações"].map(t => el("th", { text: t })))]),
+    el("thead", {}, [el("tr", {}, ["Marca", "Canal", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato", "Ações"].map(t => el("th", { text: t })))]),
     corpo
   ]);
   raiz.append(
@@ -515,7 +515,7 @@ async function mostrarMarcas(raiz) {
     return linhas.filter(l => {
       if (status && l.status !== status) return false;
       if (!termo) return true;
-      return [l.nome, l.instagram, l.email, l.telefone, l.observacoes].some(v => String(v || "").toLowerCase().includes(termo));
+      return [l.nome, l.canal, l.instagram, l.email, l.telefone, l.observacoes].some(v => String(v || "").toLowerCase().includes(termo));
     });
   }
 
@@ -535,6 +535,7 @@ async function mostrarMarcas(raiz) {
     ex.addEventListener("click", () => excluir(l));
     return el("tr", {}, [
       el("td", { text: l.nome || "—" }),
+      el("td", { text: l.canal || "—" }),
       el("td", {}, [celInstagram]),
       el("td", {}, [celEmail]),
       el("td", {}, [celTelefone]),
@@ -554,9 +555,9 @@ async function mostrarMarcas(raiz) {
   }
 
   function paraCSV() {
-    const cab = ["Marca", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato"];
+    const cab = ["Marca", "Canal", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
-    const corpoCSV = filtradas().map(l => [l.nome, l.instagram, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
+    const corpoCSV = filtradas().map(l => [l.nome, l.canal, l.instagram, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
     return "﻿" + [cab.map(esc).join(","), ...corpoCSV].join("\r\n");
   }
 
@@ -588,10 +589,12 @@ async function mostrarMetricas(raiz) {
   const cartoes = el("div", { class: "metricas-cartoes" });
   const colOrigem = el("div", {});
   const colVideos = el("div", {});
+  const colConversao = el("div", {});
   raiz.append(
     el("div", { class: "barra" }, [el("p", { text: aba.dica }), periodo]),
     aviso,
     cartoes,
+    colConversao,
     el("div", { class: "metricas-grade" }, [colOrigem, colVideos])
   );
 
@@ -617,14 +620,31 @@ async function mostrarMetricas(raiz) {
     ]);
   }
 
+  function tabelaConversao(linhas) {
+    if (!linhas.length) return el("p", { class: "vazio", text: "Sem dados nesse período." });
+    return el("table", {}, [
+      el("thead", {}, [el("tr", {}, ["Canal", "Visitas", "Leads", "Conversão"].map(t => el("th", { text: t })))]),
+      el("tbody", {}, linhas.slice(0, 12).map(([canal, v, lds, pct]) => el("tr", {}, [
+        el("td", { text: canal }),
+        el("td", { text: String(v) }),
+        el("td", { text: String(lds) }),
+        el("td", { text: pct == null ? "—" : pct + "%" })
+      ])))
+    ]);
+  }
+
   async function carregar() {
-    limpar(cartoes); limpar(colOrigem); limpar(colVideos);
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao);
     cartoes.append(el("div", { class: "vazio", text: "Carregando..." }));
     try {
       const dias = Number(periodo.value);
-      let filtro = "tipo=in.(visita,video)&select=tipo,origem,detalhe,sessao,created_at&order=created_at.desc&limit=5000";
-      if (dias) filtro += "&created_at=gte." + new Date(Date.now() - dias * 86400000).toISOString();
-      desenhar(await rest(aba.tabela + "?" + filtro) || []);
+      const desde = dias ? "&created_at=gte." + new Date(Date.now() - dias * 86400000).toISOString() : "";
+      let filtro = "tipo=in.(visita,video)&select=tipo,origem,detalhe,sessao,created_at&order=created_at.desc&limit=5000" + desde;
+      const [metricas, leads] = await Promise.all([
+        rest(aba.tabela + "?" + filtro),
+        rest("marcas?select=canal,created_at&order=created_at.desc&limit=5000" + desde).catch(() => [])
+      ]);
+      desenhar(metricas || [], leads || []);
     } catch (e) {
       limpar(cartoes);
       if (e.message === "sessao") { telaLogin("Sua sessão expirou. Entre de novo."); return; }
@@ -632,15 +652,26 @@ async function mostrarMetricas(raiz) {
     }
   }
 
-  function desenhar(linhas) {
-    limpar(cartoes); limpar(colOrigem); limpar(colVideos);
+  function desenhar(linhas, leads) {
+    limpar(cartoes); limpar(colOrigem); limpar(colVideos); limpar(colConversao);
     const visitas = linhas.filter(l => l.tipo === "visita");
     const videos = linhas.filter(l => l.tipo === "video");
     const pessoas = new Set(linhas.map(l => l.sessao)).size;
     cartoes.append(
       cartaoNumero(visitas.length, "Visitas"),
       cartaoNumero(pessoas, "Pessoas (aprox.)"),
-      cartaoNumero(videos.length, "Vídeos abertos")
+      cartaoNumero(videos.length, "Vídeos abertos"),
+      cartaoNumero(leads.length, "Leads gerados")
+    );
+    const porOrigem = new Map(contagem(visitas, l => l.origem || "Direto"));
+    const porCanal = new Map(contagem(leads, l => l.canal || "Direto"));
+    const canais = [...new Set([...porOrigem.keys(), ...porCanal.keys()])]
+      .map(c => { const v = porOrigem.get(c) || 0, lds = porCanal.get(c) || 0; return [c, v, lds, v ? Math.round(lds / v * 1000) / 10 : null]; })
+      .sort((a, b) => b[2] - a[2] || b[1] - a[1]);
+    colConversao.append(
+      el("h3", { text: "Conversão por canal" }),
+      el("p", { class: "dica", text: "Quantas visitas de cada canal viraram lead (formulário ou WhatsApp). É o dado pra decidir onde focar." }),
+      tabelaConversao(canais)
     );
     colOrigem.append(el("h3", { text: "De onde vieram" }), tabelaContagem(contagem(visitas, l => l.origem || "Direto"), "Origem", visitas.length));
     colVideos.append(el("h3", { text: "O que mais olharam" }), tabelaContagem(contagem(videos, l => l.detalhe || "Sem título"), "Vídeo", videos.length));
