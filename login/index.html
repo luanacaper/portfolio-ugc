@@ -680,7 +680,7 @@ async function mostrarMarcas(raiz) {
     ex.addEventListener("click", () => excluir(l));
     return el("tr", {}, [
       celMarca,
-      el("td", {}, [el("span", { class: "selo origem-" + origem, text: ROTULO_ORIGEM_CURTO[origem] || origem }), l.origem ? el("small", { class: "sub-celula", text: "formulário: " + l.origem }) : null]),
+      el("td", {}, [el("span", { class: "selo origem-" + origem, text: ROTULO_ORIGEM_CURTO[origem] || origem }), origem === "portfolio" && l.origem && l.origem !== "manual" ? el("small", { class: "sub-celula", text: "formulário: " + l.origem }) : null]),
       el("td", { text: l.canal || "—" }),
       el("td", {}, [celInstagram]),
       el("td", {}, [celEmail]),
@@ -851,7 +851,8 @@ async function mostrarCRM(raiz) {
       .forEach(([r, n]) => resumo.append(el("div", { class: "metrica-cartao" }, [el("b", { text: String(n) }), el("span", { text: r })])));
     limpar(quadro);
     ETAPAS_CRM.forEach(e => {
-      const daEtapa = vis.filter(l => (l.etapa || "a_enviar") === e);
+      const peso = { alta: 0, media: 1, baixa: 2 };
+      const daEtapa = vis.filter(l => (l.etapa || "a_enviar") === e).sort((a, b) => (peso[a.prioridade] ?? 1) - (peso[b.prioridade] ?? 1) || String(a.marca).localeCompare(String(b.marca), "pt-BR"));
       quadro.append(el("section", { class: "coluna-crm etapa-" + e, "aria-label": ROTULO_ETAPA[e] }, [
         el("header", {}, [el("h3", {}, [document.createTextNode(ROTULO_ETAPA[e] + " "), el("span", { class: "contador", text: String(daEtapa.length) })]), el("small", { text: DICA_ETAPA[e] })]),
         daEtapa.length ? el("div", { class: "coluna-crm-cards" }, daEtapa.map(cartao)) : el("p", { class: "coluna-vazia", text: "Nada aqui." })
