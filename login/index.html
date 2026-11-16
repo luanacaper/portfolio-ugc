@@ -112,6 +112,7 @@ table.planilha td b{display:block}
 .selo.origem-claude_chrome{background:#fdeee2;border-color:#f3c9a4;color:#8a3d0c}
 .selo.origem-portfolio{background:#e8f1e4;border-color:#c9dbc1;color:var(--verde-esc)}
 .selo.resp{background:var(--verde);border-color:var(--verde);color:#fff}
+.selo.nicho{background:#eef0df;border-color:#d7dac8;color:var(--verde-esc)}
 .selo.camp{background:#fff7e6;border-color:#f1d9a6;color:#7a5410}
 
 /* CRM em colunas */
@@ -157,6 +158,12 @@ table.planilha td b{display:block}
 .agenda-txt{display:grid;gap:1px;min-width:0;flex:1}
 .agenda-txt span{font-size:.88rem}
 .agenda-txt small{color:var(--suave);font-size:.76rem}
+.visoes{display:flex;gap:6px;margin-bottom:10px}
+.visoes .lateral-item{width:auto;border:1px solid var(--linha);background:#fff;padding:8px 16px}
+.visoes .lateral-item[aria-selected="true"]{background:var(--verde);color:#fff}
+.selo.vence{background:#fbeceb;border-color:#e6b8b4;color:var(--erro)}
+.agenda-item.retomar{border-left-color:var(--verde);background:#f3f6ec}
+.arquivo-lista{display:grid;gap:10px}
 .compositor{border-top:1px solid var(--linha);padding-top:6px;display:grid;gap:6px}
 .compositor[open]{gap:6px}
 .compositor summary{cursor:pointer;font-weight:700;font-size:.8rem;color:var(--verde-esc)}
@@ -244,6 +251,10 @@ const RESPONSAVEIS = ["Luana", "Heuller", "Chely"];
 const CAMPANHAS_SUGERIDAS = ["Abordagens Tech", "Black Friday", "Natal"];
 const PRIORIDADES = ["alta", "media", "baixa"];
 const ROTULO_PRIORIDADE = { alta: "Alta", media: "Média", baixa: "Baixa" };
+/* Nicho da marca = os mesmos nichos do Portfólio Geral, pra filtrar marca e funil igual */
+const NICHOS_MARCA = ["", ...NICHOS_GERAL, "outro"];
+const ROTULO_NICHO_MARCA = Object.assign({ "": "Sem nicho", outro: "Outro" }, ROTULO_NICHO);
+const nichoCurto = n => ({ "gastronomia-assinaturas": "Alimentação", "casa-decoracao": "Casa", "beleza-saude": "Beleza e saúde", "tech-infoprodutos": "Tech e apps", "viagem": "Viagem", outro: "Outro" })[n] || "";
 const CANAIS_ABORDAGEM = ["LinkedIn", "E-mail", "DM Instagram", "WhatsApp", "Formulário da marca", "TikTok", "Outro"];
 
 /* Cadência do primeiro contato (enquanto a marca está em "A enviar" ou "Enviado").
@@ -284,6 +295,7 @@ const ABAS = {
     campos: [
       { k: "nome", r: "Marca", t: "text", obrig: true },
       { k: "origem_base", r: "Origem (de onde a marca entrou na base)", t: "select", opcoes: ORIGENS, rotulos: ROTULO_ORIGEM },
+      { k: "nicho", r: "Nicho", t: "select", opcoes: NICHOS_MARCA, rotulos: ROTULO_NICHO_MARCA },
       { k: "instagram", r: "Instagram", t: "text", dica: "Sem @, ex: pousadaexemplo" },
       { k: "email", r: "E-mail", t: "text", dica: "Pode ter mais de um, separado por |" },
       { k: "telefone", r: "Telefone ou WhatsApp", t: "text" },
@@ -306,6 +318,7 @@ const ABAS = {
       { k: "marca", r: "Marca", t: "text", obrig: true },
       { k: "etapa", r: "Etapa", t: "select", opcoes: ETAPAS_CRM, rotulos: ROTULO_ETAPA },
       { k: "responsavel", r: "Responsável", t: "select", opcoes: RESPONSAVEIS },
+      { k: "nicho", r: "Nicho", t: "select", opcoes: NICHOS_MARCA, rotulos: ROTULO_NICHO_MARCA, dica: "Em branco = usa o nicho cadastrado na aba Marcas." },
       { k: "campanha", r: "Campanha / estratégia", t: "lista", sugestoes: CAMPANHAS_SUGERIDAS, dica: "Escolha uma ou escreva uma nova (ex.: Dia das Mães, Volta às aulas)." },
       { k: "prioridade", r: "Prioridade", t: "select", opcoes: PRIORIDADES, rotulos: ROTULO_PRIORIDADE },
       { k: "contato_nome", r: "Decisor (nome)", t: "text", dica: "Analista, coordenador ou gerente de marketing. Não o dono." },
@@ -323,6 +336,9 @@ const ABAS = {
       { k: "passo_cadencia", r: "Passo da cadência (1 a 5)", t: "number", dica: "1 LinkedIn · 2 DM Instagram · 3 follow-up LinkedIn · 4 e-mail · 5 decidir. O botão \"✓ Feito\" do card avança sozinho." },
       { k: "programa_link", r: "Programa / formulário de creators da marca", t: "text", dica: "Se a marca tem inscrição aberta pra creators, cole o link: aparece um lembrete no card até você marcar como inscrita." },
       { k: "programa_inscrito", r: "Já me inscrevi no programa", t: "check" },
+      { k: "arquivado", r: "Arquivada (sai do funil até a data de retomar)", t: "check" },
+      { k: "retomar_em", r: "Retomar contato em", t: "date" },
+      { k: "motivo_arquivo", r: "Por que arquivei", t: "textarea" },
       { k: "historico", r: "Histórico de toques", t: "textarea", dica: "Preenchido sozinho pelo \"✓ Feito\". Pode escrever à mão também (uma linha por toque)." },
       { k: "observacoes", r: "Observações", t: "textarea" }
     ]
@@ -649,16 +665,20 @@ async function mostrarMarcas(raiz) {
     el("option", { value: "", text: "Todas as origens" }),
     ...ORIGENS.map(o => el("option", { value: o, text: ROTULO_ORIGEM[o] }))
   ]);
+  const filtroNicho = el("select", { "aria-label": "Filtrar por nicho" }, [
+    el("option", { value: "*", text: "Todos os nichos" }),
+    ...NICHOS_MARCA.map(n => el("option", { value: n, text: ROTULO_NICHO_MARCA[n] }))
+  ]);
   const csv = el("button", { class: "btn contorno mini", type: "button", text: "Baixar CSV" });
   const corpo = el("tbody", {});
   const tabela = el("table", { class: "planilha" }, [
-    el("thead", {}, [el("tr", {}, ["Marca", "Origem", "Canal", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato", "Ações"].map(t => el("th", { text: t })))]),
+    el("thead", {}, [el("tr", {}, ["Marca", "Nicho", "Origem", "Canal", "Instagram", "E-mail", "Telefone", "Situação", "Observação", "Último contato", "Ações"].map(t => el("th", { text: t })))]),
     corpo
   ]);
   raiz.append(
     el("div", { class: "barra" }, [el("p", { text: aba.dica }), novo]),
     aviso,
-    el("div", { class: "planilha-ferramentas" }, [busca, filtroOrigem, filtro, csv]),
+    el("div", { class: "planilha-ferramentas" }, [busca, filtroNicho, filtroOrigem, filtro, csv]),
     el("div", { class: "tabela-embrulho" }, [tabela])
   );
 
@@ -694,6 +714,7 @@ async function mostrarMarcas(raiz) {
     return linhas.filter(l => {
       if (status && l.status !== status) return false;
       if (origem && (l.origem_base || "portfolio") !== origem) return false;
+      if (filtroNicho.value !== "*" && (l.nicho || "") !== filtroNicho.value) return false;
       if (!termo) return true;
       return [l.nome, l.canal, l.instagram, l.email, l.telefone, l.observacoes, l.categoria].some(v => String(v || "").toLowerCase().includes(termo));
     });
@@ -728,11 +749,12 @@ async function mostrarMarcas(raiz) {
     paraCrm.addEventListener("click", () => abrirFormulario(ABAS.crm, null, async (id, dados) => {
       try { await rest("crm", { metodo: "POST", corpo: dados, retorno: "minimal" }); falar("Card criado no CRM para " + dados.marca + ".", "ok"); return true; }
       catch (e) { tratarErro(e); return false; }
-    }, [], { marca: l.nome, origem, contato_email: emails[0] || null, contato_whatsapp: l.telefone || null }));
+    }, [], { marca: l.nome, origem, nicho: l.nicho || null, contato_email: emails[0] || null, contato_whatsapp: l.telefone || null }));
     const ex = el("button", { class: "btn perigo mini", type: "button", text: "Excluir" });
     ex.addEventListener("click", () => excluir(l));
     return el("tr", {}, [
       celMarca,
+      el("td", {}, [l.nicho ? el("span", { class: "selo nicho", text: nichoCurto(l.nicho) }) : document.createTextNode("—")]),
       el("td", {}, [el("span", { class: "selo origem-" + origem, text: ROTULO_ORIGEM_CURTO[origem] || origem }), origem === "portfolio" && l.origem && l.origem !== "manual" ? el("small", { class: "sub-celula", text: "formulário: " + l.origem }) : null]),
       el("td", { text: l.canal || "—" }),
       el("td", {}, [celInstagram]),
@@ -748,21 +770,22 @@ async function mostrarMarcas(raiz) {
   function redesenhar() {
     const vis = filtradas();
     limpar(corpo);
-    if (!linhas.length) { corpo.append(el("tr", {}, [el("td", { colspan: 10, class: "vazio", text: "Nada por aqui ainda. Toque em \"+ " + aba.novo + "\"." })])); return; }
-    if (!vis.length) { corpo.append(el("tr", {}, [el("td", { colspan: 10, class: "vazio", text: "Nenhuma marca encontrada com esse filtro." })])); return; }
+    if (!linhas.length) { corpo.append(el("tr", {}, [el("td", { colspan: 11, class: "vazio", text: "Nada por aqui ainda. Toque em \"+ " + aba.novo + "\"." })])); return; }
+    if (!vis.length) { corpo.append(el("tr", {}, [el("td", { colspan: 11, class: "vazio", text: "Nenhuma marca encontrada com esse filtro." })])); return; }
     vis.forEach(l => corpo.append(linhaDe(l)));
   }
 
   function paraCSV() {
-    const cab = ["Marca", "Origem", "Categoria", "Canal", "Instagram", "Seguidores", "E-mail", "Telefone", "Situação", "Site", "Biblioteca de anúncios", "TikTok", "LinkedIn", "Observação", "Último contato"];
+    const cab = ["Marca", "Nicho", "Origem", "Categoria", "Canal", "Instagram", "Seguidores", "E-mail", "Telefone", "Situação", "Site", "Biblioteca de anúncios", "TikTok", "LinkedIn", "Observação", "Último contato"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
-    const corpoCSV = filtradas().map(l => [l.nome, ROTULO_ORIGEM[l.origem_base || "portfolio"], l.categoria, l.canal, l.instagram, l.seguidores, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.site, l.biblioteca_anuncios, l.tiktok, l.linkedin, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
+    const corpoCSV = filtradas().map(l => [l.nome, ROTULO_NICHO_MARCA[l.nicho || ""], ROTULO_ORIGEM[l.origem_base || "portfolio"], l.categoria, l.canal, l.instagram, l.seguidores, l.email, l.telefone, ROTULO_STATUS[l.status] || l.status, l.site, l.biblioteca_anuncios, l.tiktok, l.linkedin, l.observacoes, l.ultimo_contato ? dataBR(l.ultimo_contato) : ""].map(esc).join(","));
     return "﻿" + [cab.map(esc).join(","), ...corpoCSV].join("\r\n");
   }
 
   busca.addEventListener("input", redesenhar);
   filtro.addEventListener("change", redesenhar);
   filtroOrigem.addEventListener("change", redesenhar);
+  filtroNicho.addEventListener("change", redesenhar);
   csv.addEventListener("click", () => {
     if (!filtradas().length) { falar("Não há marcas para baixar com esse filtro.", "erro"); return; }
     const blob = new Blob([paraCSV()], { type: "text/csv;charset=utf-8;" });
@@ -785,6 +808,12 @@ async function mostrarCRM(raiz) {
   const fResp = el("select", { "aria-label": "Filtrar por responsável" }, [el("option", { value: "", text: "Todos os responsáveis" }), ...RESPONSAVEIS.map(r => el("option", { value: r, text: r }))]);
   const fCamp = el("select", { "aria-label": "Filtrar por campanha" });
   const fPri = el("select", { "aria-label": "Filtrar por prioridade" }, [el("option", { value: "", text: "Todas as prioridades" }), ...PRIORIDADES.map(p => el("option", { value: p, text: ROTULO_PRIORIDADE[p] }))]);
+  const fNicho = el("select", { "aria-label": "Filtrar por nicho" }, [el("option", { value: "*", text: "Todos os nichos" }), ...NICHOS_MARCA.map(n => el("option", { value: n, text: ROTULO_NICHO_MARCA[n] }))]);
+  let visao = "funil";
+  const btFunil = el("button", { class: "lateral-item visao", type: "button", role: "tab", "aria-selected": "true", text: "Funil" });
+  const btArq = el("button", { class: "lateral-item visao", type: "button", role: "tab", "aria-selected": "false", text: "Arquivados" });
+  const visoes = el("div", { class: "visoes", role: "tablist", "aria-label": "Visão do CRM" }, [btFunil, btArq]);
+  const arquivo = el("div", { class: "arquivo-lista", hidden: true });
   const csv = el("button", { class: "btn contorno mini", type: "button", text: "Baixar CSV" });
   const resumo = el("div", { class: "metricas-cartoes" });
   const agenda = el("details", { class: "agenda-hoje", open: true });
@@ -792,10 +821,12 @@ async function mostrarCRM(raiz) {
   raiz.append(
     el("div", { class: "barra" }, [el("p", { text: aba.dica }), novo]),
     aviso,
-    el("div", { class: "planilha-ferramentas" }, [busca, fResp, fCamp, fPri, csv]),
+    visoes,
+    el("div", { class: "planilha-ferramentas" }, [busca, fNicho, fResp, fCamp, fPri, csv]),
     resumo,
     agenda,
-    quadro
+    quadro,
+    arquivo
   );
 
   const falar = (texto, tipo) => { aviso.hidden = false; aviso.className = "aviso " + (tipo || "ok"); aviso.textContent = texto; };
@@ -839,6 +870,29 @@ async function mostrarCRM(raiz) {
     if (etapa === "perdido") { dados.proximo_passo = null; dados.data_proximo_passo = null; }
     await salvar(l.id, dados);
   }
+  const nichoDe = l => l.nicho || ((marcas[(l.marca || "").toLowerCase()] || {}).nicho) || "";
+  const arquivada = l => !!l.arquivado;
+  const toques = l => String(l.historico || "").split("\n").filter(x => /LinkedIn|Instagram|E-mail|WhatsApp/.test(x)).length;
+  /* Arquivar: sai do funil e do "Pra fazer hoje" até a data de retomar */
+  function arquivar(l) {
+    const def = { novo: "Arquivar " + l.marca, campos: [
+      { k: "motivo_arquivo", r: "Por que está arquivando?", t: "textarea", dica: "Ex.: 4 toques sem resposta; disse que só fecha creator no 2º semestre." },
+      { k: "retomar_em", r: "Tentar de novo em", t: "date", dica: "Nessa data a marca volta pro seu \"Pra fazer hoje\" com o botão Reativar. Em branco = fica arquivada até você reativar." }
+    ] };
+    abrirFormulario(def, null, async (id, dados) => salvar(l.id, {
+      arquivado: true, arquivado_em: hoje(), retomar_em: dados.retomar_em, motivo_arquivo: dados.motivo_arquivo,
+      historico: anotar(l, "Arquivada" + (dados.motivo_arquivo ? ": " + dados.motivo_arquivo : "") + (dados.retomar_em ? " (retomar em " + dataBR(dados.retomar_em) + ")" : ""))
+    }), [], { retomar_em: somaDias(90), motivo_arquivo: toques(l) ? toques(l) + " toques sem fechar" : null });
+  }
+  async function reativar(l) {
+    const p = proximoValido(l, 0);
+    await salvar(l.id, {
+      arquivado: false, retomar_em: null, etapa: "a_enviar", passo_cadencia: p, proximo_passo: textoPasso(l, p),
+      canal_abordagem: CADENCIA[p].canal, data_proximo_passo: hoje(),
+      historico: anotar(l, "Reativada pra nova tentativa" + (l.campanha ? " (campanha anterior: " + l.campanha + ")" : ""))
+    });
+    falar(l.marca + " voltou pro funil em \"A enviar\". Se for outra campanha, troque no Editar.", "ok");
+  }
   async function marcarInscrita(l) {
     await salvar(l.id, { programa_inscrito: true, historico: anotar(l, "Inscrição feita no programa de creators da marca") });
   }
@@ -847,7 +901,7 @@ async function mostrarCRM(raiz) {
     try {
       const [c, m] = await Promise.all([
         rest("crm?select=*&order=" + aba.ordem),
-        rest("marcas?select=nome,instagram,email,biblioteca_anuncios,site").catch(() => [])
+        rest("marcas?select=nome,instagram,email,biblioteca_anuncios,site,nicho").catch(() => [])
       ]);
       linhas = c || [];
       marcas = {};
@@ -893,6 +947,7 @@ async function mostrarCRM(raiz) {
       if (fResp.value && l.responsavel !== fResp.value) return false;
       if (fCamp.value && l.campanha !== fCamp.value) return false;
       if (fPri.value && l.prioridade !== fPri.value) return false;
+      if (fNicho.value !== "*" && nichoDe(l) !== fNicho.value) return false;
       if (!termo) return true;
       return [l.marca, l.contato_nome, l.contato_cargo, l.observacoes, l.proximo_passo, l.campanha].some(v => String(v || "").toLowerCase().includes(termo));
     });
@@ -907,6 +962,8 @@ async function mostrarCRM(raiz) {
     ed.addEventListener("click", () => abrirFormulario(aba, l, salvar, linhas));
     const ex = el("button", { class: "btn perigo mini", type: "button", text: "Excluir" });
     ex.addEventListener("click", () => excluir(l));
+    const arq = el("button", { class: "btn contorno mini", type: "button", text: "Arquivar" , title: "Tira do funil e guarda pra tentar em outra oportunidade" });
+    arq.addEventListener("click", () => arquivar(l));
     const links = [];
     if (l.contato_linkedin && /^https?:/.test(l.contato_linkedin)) links.push(el("a", { href: l.contato_linkedin, target: "_blank", rel: "noopener noreferrer", text: "LinkedIn" }));
     if (l.contato_email) links.push(el("a", { href: "mailto:" + l.contato_email, text: "E-mail" }));
@@ -924,6 +981,7 @@ async function mostrarCRM(raiz) {
       el("div", { class: "card-crm-selos" }, [
         l.responsavel ? el("span", { class: "selo resp", text: l.responsavel }) : el("span", { class: "selo", text: "Sem responsável" }),
         l.campanha ? el("span", { class: "selo camp", text: l.campanha }) : null,
+        nichoDe(l) ? el("span", { class: "selo nicho", text: nichoCurto(nichoDe(l)) }) : null,
         l.origem ? el("span", { class: "selo origem-" + l.origem, text: ROTULO_ORIGEM_CURTO[l.origem] || l.origem }) : null,
         l.canal_abordagem ? el("span", { class: "selo", text: l.canal_abordagem }) : null
       ]),
@@ -937,7 +995,7 @@ async function mostrarCRM(raiz) {
       l.historico ? el("small", { class: "card-crm-data", title: l.historico, text: "Último toque: " + l.historico.split("\n")[0] }) : null,
       l.valor ? el("small", { class: "card-crm-data", text: "Proposta: " + Number(l.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) }) : null,
       links.length ? el("div", { class: "mini-links" }, links) : null,
-      el("div", { class: "item-acoes" }, [sel, ed, ex])
+      el("div", { class: "item-acoes" }, [sel, ed, arq, ex])
     ]);
   }
 
@@ -957,8 +1015,8 @@ async function mostrarCRM(raiz) {
     } else {
       const perdido = el("button", { class: "btn perigo mini", type: "button", text: "Perdido" });
       perdido.addEventListener("click", () => marcarPerdido(l));
-      const pausa = el("button", { class: "btn contorno mini", type: "button", text: "Pausar 30 dias" });
-      pausa.addEventListener("click", () => pausar(l));
+      const pausa = el("button", { class: "btn contorno mini", type: "button", text: "Arquivar (tentar depois)" });
+      pausa.addEventListener("click", () => arquivar(l));
       botoes.push(pausa, perdido);
     }
     return el("div", { class: "cadencia" }, [
@@ -1070,13 +1128,29 @@ async function mostrarCRM(raiz) {
   }
 
   /* "Pra fazer hoje": tudo com próximo passo vencido ou pra hoje, mais inscrições pendentes */
-  function desenharAgenda(vis) {
+  function desenharAgenda(visTodas) {
     const h = hoje();
     const peso = { alta: 0, media: 1, baixa: 2 };
+    const retomar = visTodas.filter(l => arquivada(l) && l.retomar_em && l.retomar_em <= h);
+    const vis = visTodas.filter(l => !arquivada(l));
     const tarefas = vis.filter(l => !["fechado", "perdido"].includes(l.etapa) && ((l.data_proximo_passo && l.data_proximo_passo <= h) || (l.programa_link && !l.programa_inscrito)))
       .sort((a, b) => String(a.data_proximo_passo || h).localeCompare(String(b.data_proximo_passo || h)) || (peso[a.prioridade] ?? 1) - (peso[b.prioridade] ?? 1));
-    limpar(agenda).append(el("summary", { text: "Pra fazer hoje (" + tarefas.length + ")" }));
-    if (!tarefas.length) { agenda.append(el("p", { class: "coluna-vazia", text: "Nada pendente pra hoje com esse filtro." })); return; }
+    limpar(agenda).append(el("summary", { text: "Pra fazer hoje (" + (tarefas.length + retomar.length) + ")" }));
+    if (retomar.length) agenda.append(el("div", { class: "agenda-lista" }, retomar.map(l => {
+      const b = el("button", { class: "btn mini", type: "button", text: "Reativar" });
+      b.addEventListener("click", () => { b.disabled = true; reativar(l); });
+      const adiar = el("button", { class: "btn contorno mini", type: "button", text: "Adiar 30 dias" });
+      adiar.addEventListener("click", () => salvar(l.id, { retomar_em: somaDias(30), historico: anotar(l, "Retomada adiada 30 dias") }));
+      return el("div", { class: "agenda-item retomar" }, [
+        el("div", { class: "agenda-txt" }, [
+          el("b", { text: l.marca }),
+          el("span", { text: "Hora de tentar de novo (arquivada em " + (l.arquivado_em ? dataBR(l.arquivado_em) : "—") + ")" }),
+          el("small", { text: [l.responsavel, l.motivo_arquivo].filter(Boolean).join(" · ") })
+        ]),
+        el("div", { class: "item-acoes" }, [b, adiar])
+      ]);
+    })));
+    if (!tarefas.length) { if (!retomar.length) agenda.append(el("p", { class: "coluna-vazia", text: "Nada pendente pra hoje com esse filtro." })); return; }
     agenda.append(el("div", { class: "agenda-lista" }, tarefas.map(l => {
       const atras = l.data_proximo_passo && l.data_proximo_passo < h;
       const acoes = [];
@@ -1112,13 +1186,20 @@ async function mostrarCRM(raiz) {
   }
 
   function redesenhar() {
-    const vis = filtradas();
+    const todas = filtradas();
+    const vis = todas.filter(l => !arquivada(l));
+    const arqs = todas.filter(arquivada);
+    btArq.textContent = "Arquivados (" + arqs.length + ")";
+    const noFunil = visao === "funil";
+    resumo.hidden = agenda.hidden = quadro.hidden = !noFunil;
+    arquivo.hidden = noFunil;
+    if (!noFunil) { desenharArquivo(arqs); return; }
     limpar(resumo);
     const ativos = vis.filter(l => !["fechado", "perdido"].includes(l.etapa));
     const atrasados = ativos.filter(l => l.data_proximo_passo && l.data_proximo_passo < hoje());
     [["Marcas no pipeline", vis.length], ["Em andamento", ativos.length], ["Responderam", vis.filter(l => ["respondeu", "proposta", "fechado"].includes(l.etapa)).length], ["Fechadas", vis.filter(l => l.etapa === "fechado").length], ["Passo atrasado", atrasados.length]]
       .forEach(([r, n]) => resumo.append(el("div", { class: "metrica-cartao" }, [el("b", { text: String(n) }), el("span", { text: r })])));
-    desenharAgenda(vis);
+    desenharAgenda(todas);
     limpar(quadro);
     ETAPAS_CRM.forEach(e => {
       const peso = { alta: 0, media: 1, baixa: 2 };
@@ -1130,16 +1211,53 @@ async function mostrarCRM(raiz) {
     });
   }
 
+  function desenharArquivo(arqs) {
+    limpar(arquivo);
+    arquivo.append(el("p", { class: "dica", text: "Marcas que já receberam vários contatos e não fecharam. Ficam fora do funil e voltam pro \"Pra fazer hoje\" na data de retomar." }));
+    if (!arqs.length) { arquivo.append(el("p", { class: "vazio", text: "Nenhuma marca arquivada com esse filtro." })); return; }
+    const h = hoje();
+    const ordem = [...arqs].sort((a, b) => String(a.retomar_em || "9999").localeCompare(String(b.retomar_em || "9999")));
+    const corpo = el("tbody", {}, ordem.map(l => {
+      const re = el("button", { class: "btn mini", type: "button", text: "Reativar" });
+      re.addEventListener("click", () => { re.disabled = true; reativar(l); });
+      const ed = el("button", { class: "btn contorno mini", type: "button", text: "Editar" });
+      ed.addEventListener("click", () => abrirFormulario(aba, l, salvar, linhas));
+      const vence = l.retomar_em && l.retomar_em <= h;
+      return el("tr", {}, [
+        el("td", {}, [el("b", { text: l.marca }), l.contato_nome ? el("small", { class: "sub-celula", text: l.contato_nome + (l.contato_cargo ? " · " + l.contato_cargo : "") }) : null]),
+        el("td", { text: nichoCurto(nichoDe(l)) || "—" }),
+        el("td", { text: l.campanha || "—" }),
+        el("td", { text: ROTULO_ETAPA[l.etapa] || l.etapa || "—" }),
+        el("td", { text: String(toques(l)) }),
+        el("td", { class: "obs", title: l.motivo_arquivo || "", text: l.motivo_arquivo || "—" }),
+        el("td", { text: l.arquivado_em ? dataBR(l.arquivado_em) : "—" }),
+        el("td", {}, [l.retomar_em ? el("span", { class: "selo" + (vence ? " vence" : ""), text: dataBR(l.retomar_em) + (vence ? " · já pode" : "") }) : document.createTextNode("Sem data")]),
+        el("td", { text: l.responsavel || "—" }),
+        el("td", {}, [el("div", { class: "item-acoes" }, [re, ed])])
+      ]);
+    }));
+    arquivo.append(el("div", { class: "tabela-embrulho" }, [el("table", { class: "planilha" }, [
+      el("thead", {}, [el("tr", {}, ["Marca", "Nicho", "Campanha", "Parou em", "Toques", "Motivo", "Arquivada em", "Retomar em", "Responsável", "Ações"].map(t => el("th", { text: t })))]),
+      corpo
+    ])]));
+  }
+
   function paraCSV() {
-    const cols = ["marca", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "passo_cadencia", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "programa_link", "programa_inscrito", "outros_contatos", "historico", "observacoes"];
-    const cab = ["Marca", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Passo da cadência", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Programa de creators", "Inscrita no programa", "Outros contatos", "Histórico", "Observações"];
+    const cols = ["marca", "nicho", "arquivado", "retomar_em", "motivo_arquivo", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "passo_cadencia", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "programa_link", "programa_inscrito", "outros_contatos", "historico", "observacoes"];
+    const cab = ["Marca", "Nicho", "Arquivada", "Retomar em", "Motivo do arquivo", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Passo da cadência", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Programa de creators", "Inscrita no programa", "Outros contatos", "Histórico", "Observações"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
     const fmt = (k, v) => k === "etapa" ? ROTULO_ETAPA[v] || v : k === "prioridade" ? ROTULO_PRIORIDADE[v] || v : k === "origem" ? ROTULO_ORIGEM[v] || v : /^data/.test(k) && v ? dataBR(v) : v;
-    return "﻿" + [cab.map(esc).join(","), ...filtradas().map(l => cols.map(k => esc(fmt(k, l[k]))).join(","))].join("\r\n");
+    return "﻿" + [cab.map(esc).join(","), ...filtradas().map(l => cols.map(k => esc(fmt(k, k === "nicho" ? (ROTULO_NICHO_MARCA[nichoDe(l)] || "") : k === "arquivado" ? (l.arquivado ? "sim" : "não") : l[k]))).join(","))].join("\r\n");
   }
 
   [busca].forEach(x => x.addEventListener("input", redesenhar));
-  [fResp, fCamp, fPri].forEach(x => x.addEventListener("change", redesenhar));
+  [fResp, fCamp, fPri, fNicho].forEach(x => x.addEventListener("change", redesenhar));
+  [[btFunil, "funil"], [btArq, "arquivo"]].forEach(([b, v]) => b.addEventListener("click", () => {
+    visao = v;
+    btFunil.setAttribute("aria-selected", String(v === "funil"));
+    btArq.setAttribute("aria-selected", String(v === "arquivo"));
+    redesenhar();
+  }));
   csv.addEventListener("click", () => {
     if (!filtradas().length) { falar("Não há cards para baixar com esse filtro.", "erro"); return; }
     const blob = new Blob([paraCSV()], { type: "text/csv;charset=utf-8;" });
