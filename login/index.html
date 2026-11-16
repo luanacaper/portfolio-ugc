@@ -75,6 +75,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .barra{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
 .barra p{color:var(--suave);font-size:.9rem}
 .lista{display:grid;gap:10px}
+.mapa-utm{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--linha)}
+.mapa-utm h3{margin-bottom:4px}
 .item{background:#fff;border:1px solid var(--linha);border-radius:20px;padding:14px 16px;display:grid;gap:8px}
 .item-cab{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
 .item-cab img{flex:none;width:44px;height:78px;object-fit:cover;border-radius:8px;background:#ddd}
@@ -148,7 +150,7 @@ const ROTULO_TAMANHO = { "": "Padrão", pequeno: "Pequeno (62px)", grande: "Gran
 const SITES_UTM = {
   geral: "https://luanacaper.github.io/portifolio/",
   viagem: "https://luanacaper.github.io/portfolio-ugc/",
-  "geral-dominio": "https://negocioscreators.com/luanacaper/portifolio/",
+  "geral-dominio": "https://negocioscreators.com/luh/portifolio/",
   "viagem-dominio": "https://negocioscreators.com/luanacaper/portifolio/ugc/"
 };
 const ROTULO_SITE_UTM = {
@@ -413,6 +415,29 @@ function telaPainel() {
   mostrarAba(conteudo, atual);
 }
 
+/* Mapa fixo dos portfólios: endereço de cada um, pra copiar sem precisar criar um link UTM pra isso. */
+function mapaUtm() {
+  const linhas = Object.keys(SITES_UTM).map(k => {
+    const url = SITES_UTM[k];
+    const copiar = el("button", { class: "btn contorno mini", type: "button", text: "Copiar" });
+    copiar.addEventListener("click", () => {
+      navigator.clipboard.writeText(url).then(() => {
+        copiar.textContent = "Copiado!";
+        setTimeout(() => { copiar.textContent = "Copiar"; }, 1600);
+      });
+    });
+    return el("div", { class: "item" }, [
+      el("div", { class: "item-cab" }, [el("div", { class: "item-txt" }, [el("b", { text: ROTULO_SITE_UTM[k] || k }), el("span", { text: url })])]),
+      el("div", { class: "item-acoes" }, [copiar])
+    ]);
+  });
+  return el("div", { class: "mapa-utm" }, [
+    el("h3", { text: "Mapa dos seus portfólios" }),
+    el("p", { class: "dica", text: "Endereço de cada portfólio, sem UTM — pra quando você só precisa do link puro." }),
+    el("div", { class: "lista" }, linhas)
+  ]);
+}
+
 async function mostrarAba(raiz, chave) {
   if (chave === "marcas") return mostrarMarcas(raiz);
   if (chave === "metricas") return mostrarMetricas(raiz);
@@ -422,6 +447,7 @@ async function mostrarAba(raiz, chave) {
   const lista = el("div", { class: "lista" }, [el("div", { class: "vazio", text: "Carregando..." })]);
   const novo = el("button", { class: "btn", type: "button", text: "+ " + aba.novo });
   raiz.append(el("div", { class: "barra" }, [el("p", { text: aba.dica }), novo]), aviso, lista);
+  if (chave === "links_utm") raiz.insertBefore(mapaUtm(), aviso);
 
   const falar = (texto, tipo) => { aviso.hidden = false; aviso.className = "aviso " + (tipo || "ok"); aviso.textContent = texto; };
   let linhas = [];
