@@ -97,7 +97,7 @@ table.planilha{width:100%;border-collapse:collapse;font-size:.86rem;min-width:86
 table.planilha th,table.planilha td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--linha);vertical-align:top}
 table.planilha thead th{background:var(--gelo);font-size:.74rem;text-transform:uppercase;letter-spacing:.03em;color:var(--suave);white-space:nowrap;position:sticky;top:0}
 table.planilha tbody tr:hover{background:var(--gelo)}
-table.planilha td.obs{max-width:240px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--suave)}
+table.planilha td.obs{max-width:220px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--suave);cursor:help}
 table.planilha td.vazio{text-align:center;color:var(--suave);padding:24px 12px}
 table.planilha select{padding:5px 9px;border:1.5px solid #d7dac8;border-radius:999px;background:#fff;font-weight:600;font-size:.82rem}
 table.planilha a{color:var(--verde-esc);font-weight:600}
@@ -686,7 +686,7 @@ async function mostrarMarcas(raiz) {
       el("td", {}, [celEmail]),
       el("td", {}, [celTelefone]),
       el("td", {}, [sel]),
-      el("td", { class: "obs", text: l.observacoes || "—" }),
+      el("td", { class: "obs", title: l.observacoes || "", text: l.observacoes || "—" }),
       el("td", { text: l.ultimo_contato ? dataBR(l.ultimo_contato) : "—" }),
       el("td", {}, [el("div", { class: "item-acoes" }, [ed, paraCrm, ex])])
     ]);
