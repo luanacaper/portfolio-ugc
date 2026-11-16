@@ -336,6 +336,9 @@ const ABAS = {
       { k: "passo_cadencia", r: "Passo da cadência (1 a 5)", t: "number", dica: "1 LinkedIn · 2 DM Instagram · 3 follow-up LinkedIn · 4 e-mail · 5 decidir. O botão \"✓ Feito\" do card avança sozinho." },
       { k: "programa_link", r: "Programa / formulário de creators da marca", t: "text", dica: "Se a marca tem inscrição aberta pra creators, cole o link: aparece um lembrete no card até você marcar como inscrita." },
       { k: "programa_inscrito", r: "Já me inscrevi no programa", t: "check" },
+      { k: "comentario_ig_post", r: "Post do Instagram pra comentar (aquecimento)", t: "text", dica: "Link do post da marca em que vale deixar um comentário sincero antes da DM." },
+      { k: "comentario_ig", r: "Comentário sugerido no Instagram", t: "textarea", dica: "Curto, sincero e sem pedir nada. Aparece no card com o botão que copia e abre o post." },
+      { k: "comentario_ig_feito", r: "Já comentei", t: "check" },
       { k: "arquivado", r: "Arquivada (sai do funil até a data de retomar)", t: "check" },
       { k: "retomar_em", r: "Retomar contato em", t: "date" },
       { k: "motivo_arquivo", r: "Por que arquivei", t: "textarea" },
@@ -991,6 +994,7 @@ async function mostrarCRM(raiz) {
       ]) : null,
       emCadencia(l) ? blocoCadencia(l) : compositor(l, "livre", false),
       l.programa_link && !l.programa_inscrito ? blocoPrograma(l) : null,
+      (l.comentario_ig || l.comentario_ig_post) && !l.comentario_ig_feito ? blocoComentario(l) : null,
       l.data_envio ? el("small", { class: "card-crm-data", text: "Enviado em " + dataBR(l.data_envio) }) : null,
       l.historico ? el("small", { class: "card-crm-data", title: l.historico, text: "Último toque: " + l.historico.split("\n")[0] }) : null,
       l.valor ? el("small", { class: "card-crm-data", text: "Proposta: " + Number(l.valor).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) }) : null,
@@ -1127,6 +1131,37 @@ async function mostrarCRM(raiz) {
     ]);
   }
 
+  /* Comentário de aquecimento no Instagram: texto sugerido + link do post (não publica nada sozinho) */
+  function blocoComentario(l) {
+    const txt = el("textarea", { class: "msg-texto", rows: 3, "aria-label": "Comentário no Instagram para " + l.marca });
+    txt.value = l.comentario_ig || "";
+    const status = el("small", { class: "msg-status" });
+    let tempo;
+    txt.addEventListener("input", () => {
+      clearTimeout(tempo); status.textContent = "salvando...";
+      tempo = setTimeout(async () => {
+        try { await rest(aba.tabela + "?id=eq." + l.id, { metodo: "PATCH", corpo: { comentario_ig: txt.value }, retorno: "minimal" }); l.comentario_ig = txt.value; status.textContent = "salvo"; }
+        catch (e) { tratarErro(e); }
+      }, 700);
+    });
+    const abrir = el("button", { class: "btn mini", type: "button", text: l.comentario_ig_post ? "Copiar e abrir o post" : "Sem link do post" });
+    abrir.disabled = !l.comentario_ig_post;
+    abrir.addEventListener("click", async () => {
+      let copiou = true;
+      try { await navigator.clipboard.writeText(txt.value); } catch (e) { copiou = false; }
+      window.open(l.comentario_ig_post, "_blank", "noopener");
+      status.textContent = copiou ? "texto copiado: é só colar no comentário" : "não consegui copiar: selecione o texto";
+    });
+    const feito = el("button", { class: "btn contorno mini", type: "button", text: "✓ Comentei" });
+    feito.addEventListener("click", () => salvar(l.id, { comentario_ig_feito: true, historico: anotar(l, "Comentário no Instagram da marca") }));
+    return el("details", { class: "compositor" }, [
+      el("summary", { text: "💬 Comentário no Instagram (aquecimento)" }),
+      txt,
+      el("div", { class: "msg-rodape" }, [el("small", { text: "Curto, sincero, sem pedir nada" }), status]),
+      el("div", { class: "item-acoes" }, [abrir, feito])
+    ]);
+  }
+
   /* "Pra fazer hoje": tudo com próximo passo vencido ou pra hoje, mais inscrições pendentes */
   function desenharAgenda(visTodas) {
     const h = hoje();
@@ -1243,8 +1278,8 @@ async function mostrarCRM(raiz) {
   }
 
   function paraCSV() {
-    const cols = ["marca", "nicho", "arquivado", "retomar_em", "motivo_arquivo", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "passo_cadencia", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "programa_link", "programa_inscrito", "outros_contatos", "historico", "observacoes"];
-    const cab = ["Marca", "Nicho", "Arquivada", "Retomar em", "Motivo do arquivo", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Passo da cadência", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Programa de creators", "Inscrita no programa", "Outros contatos", "Histórico", "Observações"];
+    const cols = ["marca", "nicho", "arquivado", "retomar_em", "motivo_arquivo", "etapa", "responsavel", "campanha", "prioridade", "contato_nome", "contato_cargo", "contato_linkedin", "contato_email", "contato_whatsapp", "canal_abordagem", "passo_cadencia", "data_envio", "proximo_passo", "data_proximo_passo", "valor", "origem", "programa_link", "programa_inscrito", "outros_contatos", "historico", "observacoes", "comentario_ig_post", "comentario_ig"];
+    const cab = ["Marca", "Nicho", "Arquivada", "Retomar em", "Motivo do arquivo", "Etapa", "Responsável", "Campanha", "Prioridade", "Decisor", "Cargo", "LinkedIn", "E-mail", "WhatsApp", "Canal", "Passo da cadência", "Data do envio", "Próximo passo", "Data do próximo passo", "Valor", "Origem", "Programa de creators", "Inscrita no programa", "Outros contatos", "Histórico", "Observações", "Post pra comentar", "Comentário no Instagram"];
     const esc = v => { const s = String(v == null ? "" : v).replace(/"/g, '""'); return /[",\n;]/.test(s) ? '"' + s + '"' : s; };
     const fmt = (k, v) => k === "etapa" ? ROTULO_ETAPA[v] || v : k === "prioridade" ? ROTULO_PRIORIDADE[v] || v : k === "origem" ? ROTULO_ORIGEM[v] || v : /^data/.test(k) && v ? dataBR(v) : v;
     return "﻿" + [cab.map(esc).join(","), ...filtradas().map(l => cols.map(k => esc(fmt(k, k === "nicho" ? (ROTULO_NICHO_MARCA[nichoDe(l)] || "") : k === "arquivado" ? (l.arquivado ? "sim" : "não") : l[k]))).join(","))].join("\r\n");
